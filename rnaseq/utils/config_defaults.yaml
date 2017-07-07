@@ -15,10 +15,16 @@ module_dir:
     fastqc: 'fastqc/fastqc_results'
     gc: 'fastqc/gc_plot'
     reads_quality: 'fastqc/reads_quality_plot'
+  mapping:
+    main: 'mapping'
+    bam: 'mapping/bam_dir'
+    map: 'mapping/mapping_dir'
+    logs: 'mapping/logs'
 
 module_software:
   fastqc: 'fastqc'
   Rscript: 'Rscript'
+  star: 'STAR'
 
 file_suffix:
   fq: 'clean.fq.gz'
