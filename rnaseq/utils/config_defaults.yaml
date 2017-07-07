@@ -1,0 +1,24 @@
+#################################################################
+#  module path config
+#################################################################
+# This file contains all path of rnaseq analysis and
+# needed softwares in rnaseq analysis.
+# 1. You could add these software to your PATH.
+# 2. Copy this file to '~/.multiqc_config.yaml' or
+# '<working directory>/multiqc_config.yaml' and
+# add absolute path to the softwares.
+#################################################################
+module_dir:
+  fastqc:
+    main: 'fastqc'
+    logs: 'fastqc/logs'
+    fastqc: 'fastqc/fastqc_results'
+    gc: 'fastqc/gc_plot'
+    reads_quality: 'fastqc/reads_quality_plot'
+
+module_software:
+  fastqc: 'fastqc'
+  Rscript: 'Rscript'
+
+file_suffix:
+  fq: 'clean.fq.gz'

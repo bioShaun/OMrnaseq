@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+import click
+from click_default_group import DefaultGroup
+import os
+import envoy
+import subprocess
+
+CURRENT_DIR = os.getcwd()
+DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
+DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
+
+
+@click.group(chain=True, invoke_without_command=True,
+             cls=DefaultGroup, default='next', default_if_no_args=True)
+@click.option('-p', '--proj_dir',
+              type=click.Path(exists=True), default=CURRENT_DIR,
+              help='project analysis directory, default is current dir.')
+@click.option('-s', '--sample_inf',
+              type=click.Path(exists=True), default=DEFAULT_SAMPLE_INI,
+              help='group vs sample file, default is "sample.ini" in current dir.')
+@click.option('-fq', '--fq_dir',
+              type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
+              help='directory place analysis fq files, default is "cleandata" in current dir.')
+@click.option('-w', '--workers',
+              type=int, help='paralle number.')
+@click.pass_context
+def main(ctx, proj_dir, sample_inf, fq_dir, workers):
+    ctx.obj['PROJ_DIR'] = proj_dir
+    ctx.obj['SAMPLE_INF'] = sample_inf
+    ctx.obj['FQ_DIR'] = fq_dir
+    ctx.obj['WORKERS'] = workers
+
+
+@main.command('fastqc')
+@click.pass_context
+def fastqc(ctx):
+    fastqc_cmd = 'mrna_fastqc fastqc_collection --proj-dir {_proj_dir} --sample-inf {_sample} --clean-dir {fq_dir} --workers {workers}'.format(
+        _proj_dir=ctx.obj['PROJ_DIR'], _sample=ctx.obj['SAMPLE_INF'],
+        fq_dir=ctx.obj['FQ_DIR'], workers=ctx.obj['WORKERS']
+    )
+    fastqc_cmd_list = envoy.expand_args(fastqc_cmd)[0]
+    subprocess.Popen(fastqc_cmd_list, shell=False)
+    return 'run fastqc!'
+
+
+if __name__ == '__main__':
+    main(obj=dict())
