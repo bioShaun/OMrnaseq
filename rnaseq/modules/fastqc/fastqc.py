@@ -7,6 +7,7 @@ import envoy
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import rsync_pattern_to_file
 from rnaseq.utils.util_functions import write_obj_to_file
+from rnaseq.utils.util_functions import prepare_dir
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 GC_PLOT_R = os.path.join(script_dir, 'gc_plot.R')
@@ -14,26 +15,10 @@ RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot.R')
 FASTQC_SUMMERY = os.path.join(script_dir, 'fastqc_summary.py')
 
 
-class prepare_dir(luigi.Task):
+class prepare_dir(prepare_dir):
 
-    proj_dir = luigi.Parameter()
     clean_dir = luigi.Parameter()
-
-    def run(self):
-        with self.output().open('w') as prepare_dir_log:
-            for each_module in config.module_dir['fastqc']:
-                each_module_dir = os.path.join(
-                    self.proj_dir, config.module_dir['fastqc'][each_module])
-                config.module_dir['fastqc'][each_module] = each_module_dir
-                try:
-                    os.makedirs(each_module_dir)
-                except OSError:
-                    prepare_dir_log.write(
-                        '{each_module_dir} has been built before.'.format(**locals()))
-
-    def output(self):
-        return luigi.LocalTarget('{t.proj_dir}/{log_dir}/prepare_dir.log'.format(
-            t=self, log_dir=config.module_dir['fastqc']['logs']))
+    _module = 'fastqc'
 
 
 @requires(prepare_dir)

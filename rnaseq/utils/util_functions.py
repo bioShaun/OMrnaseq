@@ -1,25 +1,29 @@
-import subprocess
-import sys
 import glob
+import luigi
+import os
+from . import config
 
 
-def run_cmd(cmd_obj, is_shell_cmd=False):
-    if not cmd_obj:
-        sys.exit('empty cmd')
-    elif isinstance(cmd_obj[0], str):
-        p = subprocess.Popen(
-            cmd_obj, universal_newlines=True, stdout=subprocess.PIPE, shell=is_shell_cmd)
-        output = p.communicate()[0]
-    elif isinstance(cmd_obj[0], list):
-        output_list = []
-        for each_cmd in cmd_obj:
-            p = subprocess.Popen(
-                each_cmd, universal_newlines=True, stdout=subprocess.PIPE, shell=is_shell_cmd)
-            output_list.append(p.communicate()[0])
-        output = '\n'.join(output_list)
-    else:
-        sys.exit('unknown cmd format')
-    return output
+class prepare_dir(luigi.Task):
+
+    proj_dir = luigi.Parameter()
+    _module = None
+
+    def run(self):
+        with self.output().open('w') as prepare_dir_log:
+            for each_module in config.module_dir[self._module]:
+                each_module_dir = os.path.join(
+                    self.proj_dir, config.module_dir[self._module][each_module])
+                config.module_dir[self._module][each_module] = each_module_dir
+                try:
+                    os.makedirs(each_module_dir)
+                except OSError:
+                    prepare_dir_log.write(
+                        '{each_module_dir} has been built before.'.format(**locals()))
+
+    def output(self):
+        return luigi.LocalTarget('{t.proj_dir}/{log_dir}/prepare_dir.log'.format(
+            t=self, log_dir=config.module_dir[self._module]['logs']))
 
 
 def rsync_pattern_to_file(from_dir, pattern_list):
@@ -43,4 +47,4 @@ def write_obj_to_file(obj, fn, append=False):
             fh.write('%s\t%s\n' % (key, val))
     else:
         raise TypeError('invalid type for %s' % obj)
-    fh.close()    
+    fh.close()
