@@ -22,11 +22,7 @@ module_dir:
     fastqc: 'fastqc/fastqc_results'
     gc: 'fastqc/gc_plot'
     reads_quality: 'fastqc/reads_quality_plot'
-<<<<<<< HEAD
-  mapping:
-=======
   star_mapping:
->>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
     main: 'mapping'
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
@@ -38,9 +34,6 @@ module_dir:
 module_software:
   fastqc: 'fastqc'
   Rscript: 'Rscript'
-<<<<<<< HEAD
-  star: 'STAR'
-=======
   star_mapping: 'STAR'
 
 
@@ -103,7 +96,6 @@ module_file:
       - 'mapping_stats_plot.png'
       - 'mapping_stats.report'
       - 'mapping_stats.txt'
->>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
 
 file_suffix:
   fq: 'clean.fq.gz'
