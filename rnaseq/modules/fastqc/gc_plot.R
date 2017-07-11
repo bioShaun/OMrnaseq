@@ -5,12 +5,18 @@ suppressMessages(require('tidyverse',quietly = T))
 suppressMessages(require('reshape2',quietly = T))
 suppressMessages(require('scales',quietly = T))
 suppressMessages(require('argparser',quietly = T))
-source('/public/scripts/RNAseq/R/rseqc/RNAseq_plot_lib.R')
+suppressMessages(require('kimisc',quietly = T))
+
+
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
 
 #----plot----
 p <- arg_parser('gc plot')
 p <- add_argument(p,'--gc_dir',help = 'gc stats')
 p <- add_argument(p, '--sample_inf', help = 'sample info file')
+p <- add_argument(p,'--out_dir',help = 'path to save plot')
 argv <- parse_args(parser = p)
 
 # for test
@@ -22,6 +28,8 @@ argv <- parse_args(parser = p)
 # read parameters
 gc_dir <- argv$gc_dir
 sample_inf <- argv$sample_inf
+out_dir <- argv$out_dir
+
 
 group_inf_df <- read.delim(sample_inf, header = F)
 sample_number <- length(group_inf_df$V2)

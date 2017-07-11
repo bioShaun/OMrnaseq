@@ -24,7 +24,8 @@ setup(
         'luigi',
         'pyyaml',
         'envoy',
-        'xlsxwriter'],
+        'xlsxwriter',
+        'pandas'],
 )
 
 print '''------------------------------
