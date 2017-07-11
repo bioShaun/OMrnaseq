@@ -4,6 +4,7 @@ import os
 from . import config
 
 
+<<<<<<< HEAD
 class prepare_dir(luigi.Task):
 
     proj_dir = luigi.Parameter()
@@ -26,6 +27,8 @@ class prepare_dir(luigi.Task):
             t=self, log_dir=config.module_dir[self._module]['logs']))
 
 
+=======
+>>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
 def rsync_pattern_to_file(from_dir, pattern_list):
     pattern_path_list = [
         '{0}/{1}'.format(from_dir, each_pattern) for each_pattern in pattern_list]

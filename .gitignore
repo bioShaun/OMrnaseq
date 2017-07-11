@@ -38,6 +38,9 @@ pip-delete-this-directory.txt
 # test dir
 test_proj/
 
+# config
+.*config*
+
 # Unit test / coverage reports
 htmlcov/
 .tox/

@@ -8,23 +8,102 @@
 # '<working directory>/multiqc_config.yaml' and
 # add absolute path to the softwares.
 #################################################################
+
+########################################
+# config directory of each module      #
+########################################
 module_dir:
+  test:
+    main: 'test_dir'
+    logs: 'test_dir/logs'
   fastqc:
     main: 'fastqc'
     logs: 'fastqc/logs'
     fastqc: 'fastqc/fastqc_results'
     gc: 'fastqc/gc_plot'
     reads_quality: 'fastqc/reads_quality_plot'
+<<<<<<< HEAD
   mapping:
+=======
+  star_mapping:
+>>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
     main: 'mapping'
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
     logs: 'mapping/logs'
 
+########################################
+# config software path                 #
+########################################
 module_software:
   fastqc: 'fastqc'
   Rscript: 'Rscript'
+<<<<<<< HEAD
   star: 'STAR'
+=======
+  star_mapping: 'STAR'
+
+
+########################################
+# config command line for each module  #
+########################################
+module_cmd:
+  fastqc:
+    run_fastqc: '{t.fastqc_bin} {t.clean_dir}/{t.sample}_1.{t.fq_suffix} {t.clean_dir}/{t.sample}_2.{t.fq_suffix} --extract -o {t.proj_dir}/{t.fastqc_dir}'
+    fastqc_summary: 'python {t._script} {t.sample_inf} {t.proj_dir}/{t._dir} {t.proj_dir}/{t._dir}/fastqc_general_stats'
+    gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir} --sample_inf {t.sample_inf}'
+    reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
+  star_mapping:
+    run_star: '{t._star} --genomeDir {t.star_index}
+                         --readFilesIn {t.clean_dir}/{t.sample}_1.{t.fq_suffix} {t.clean_dir}/{t.sample}_2.{t.fq_suffix}
+                         --readFilesCommand zcat
+                         --outFileNamePrefix {t.proj_dir}/{t._mapping_dir}/{t.sample}/
+                         --runThreadN {t._thread}
+                         --outSAMtype BAM SortedByCoordinate
+                         --outSAMstrandField intronMotif
+                         --outFilterType BySJout
+                         --outFilterMultimapNmax 20
+                         --alignSJoverhangMin 8
+                         --alignSJDBoverhangMin 1
+                         --outFilterMismatchNmax 999
+                         --alignIntronMin 20
+                         --alignIntronMax 1000000
+                         --alignMatesGapMax 1000000'
+    get_bam_file: 'ln -s {t.proj_dir}/{t._mapping_dir}/{t.sample}/Aligned.sortedByCoord.out.bam {t.proj_dir}/{t._bam_dir}/{t.sample}.bam |
+                   samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
+    star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
+                           {t._R} {t._plot_script} --sample_inf {t.sample_inf} --mapping_stats {t.proj_dir}/{t._main_dir}/mapping_stats.plot --out_dir {t.proj_dir}/{t._main_dir}'
+
+
+
+#################################################
+# files ignore in results and needed in report  #
+#################################################
+module_file:
+  fastqc:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'fastqc_results/*zip'
+      - '.report_files'
+    pdf_files:
+      - 'fastqc_general_stats.txt'
+      - 'gc_plot/*gc_distribution.line.png'
+      - 'reads_quality_plot/*reads_quality.bar.png'
+  star_mapping:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'mapping_dir'
+      - 'bam_dir'
+      - 'mapping_stats.plot'
+      - 'Rplots.pdf'
+      - 'mapping_stats.report'
+    pdf_files:
+      - 'mapping_stats_plot.png'
+      - 'mapping_stats.report'
+      - 'mapping_stats.txt'
+>>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
 
 file_suffix:
   fq: 'clean.fq.gz'

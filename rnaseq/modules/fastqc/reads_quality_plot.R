@@ -2,11 +2,16 @@
 library(scales)
 library(ggplot2)
 library(ggthemes)
+suppressMessages(require('kimisc',quietly = T))
+
 argv <- commandArgs(T)
 file_path <- argv[1]
 group_sample <- argv[2]
 options(stringsAsFactors = F)
-source('/public/scripts/RNAseq/R/rseqc/RNAseq_plot_lib.R')
+
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
 
 # for test
 # source('../../scripts/atom/R/rseqc/RNAseq_plot_lib.R')
