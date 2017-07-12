@@ -44,7 +44,7 @@ class simple_task(luigi.Task):
             t=self)
         _process = envoy.run(_run_cmd)
         with self.output().open('w') as simple_task_log:
-            simple_task_log.write(_process.std_out)
+            simple_task_log.write(_process.std_err)
 
     def output(self):
         _tag = self.get_tag()

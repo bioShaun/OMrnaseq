@@ -2,15 +2,12 @@ suppressMessages(library(ggplot2))
 suppressMessages(library(reshape2))
 suppressMessages(library(scales))
 suppressMessages(library(argparser))
+suppressMessages(require('kimisc',quietly = T))
 options(stringsAsFactors = F)
-<<<<<<< HEAD
-source('/public/scripts/RNAseq/R/quantification/quant_plot.R')
-=======
 
 script_dir <- dirname(thisfile())
 lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
 source(lib_path)
->>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
 # source('C:\\work\\scripts\\atom\\R\\quantification\\quant_plot.R')
 #
 # setwd('C:\\work\\project\\mRNA\\2017\\OM-mRNA-20-Wheat-P20170502\\mapping')
