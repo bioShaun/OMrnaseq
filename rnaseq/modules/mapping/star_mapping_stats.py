@@ -7,6 +7,7 @@ Usage:
 from docopt import docopt
 import pandas as pd
 from os import path
+import packaging
 
 
 def read_star_mapping_log(star_log_file):
@@ -15,6 +16,23 @@ def read_star_mapping_log(star_log_file):
     star_df = star_df.ix[4:]
     star_df.loc[:, 1] = [each.strip() for each in star_df.loc[:, 1]]
     return star_df
+
+
+try:
+    if packaging.version.parse(pd.__version__) \
+            < packaging.version.parse('0.18'):
+        format_module = pd.core.format
+    elif packaging.version.parse(pd.__version__) \
+            < packaging.version.parse('0.20'):
+        format_module = pd.formats.format
+    else:
+        import pd.io.formats.excel
+        format_module = pd.io.formats.excel
+
+    format_module.header_style = None
+except:
+    pass
+
 
 
 if __name__ == '__main__':
@@ -38,7 +56,6 @@ if __name__ == '__main__':
     star_mapping_stats_txt = '{}.txt'.format(star_mapping_stats_prefix)
     star_log_out_df.to_csv(star_mapping_stats_txt, sep='\t')
     star_mapping_stats_excel = '{}.xlsx'.format(star_mapping_stats_prefix)
-    pd.formats.format.header_style = None
     writer = pd.ExcelWriter(star_mapping_stats_excel, engine='xlsxwriter', options={
                             'strings_to_urls': False})
     star_log_out_df.to_excel(writer, 'star_mapping_stats')
