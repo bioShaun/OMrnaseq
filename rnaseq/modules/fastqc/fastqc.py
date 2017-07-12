@@ -4,15 +4,9 @@ import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
-<<<<<<< HEAD
-from rnaseq.utils.util_functions import rsync_pattern_to_file
-from rnaseq.utils.util_functions import write_obj_to_file
-from rnaseq.utils.util_functions import prepare_dir
-=======
 from rnaseq.modules.base_module import prepare
 from rnaseq.modules.base_module import simple_task
 from rnaseq.modules.base_module import collection_task
->>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 MODULE, _ = os.path.splitext(script_name)
@@ -21,16 +15,6 @@ RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot.R')
 FASTQC_SUMMERY = os.path.join(script_dir, 'fastqc_summary.py')
 
 
-<<<<<<< HEAD
-class prepare_dir(prepare_dir):
-
-    clean_dir = luigi.Parameter()
-    _module = 'fastqc'
-
-
-@requires(prepare_dir)
-class run_fastqc(luigi.Task):
-=======
 class fastqc_prepare(prepare):
     clean_dir = luigi.Parameter()
     _module = MODULE
@@ -38,7 +22,6 @@ class fastqc_prepare(prepare):
 
 @requires(fastqc_prepare)
 class run_fastqc(simple_task):
->>>>>>> 4e136c66d0d8b2f7604b5a1b2d3b063655e6f6a7
     '''
     run fastqc
     '''
