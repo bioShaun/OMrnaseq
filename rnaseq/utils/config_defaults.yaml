@@ -27,6 +27,11 @@ module_dir:
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
     logs: 'mapping/logs'
+  quick_enrich:
+    main: 'enrichment'
+    go: 'enrichment/go'
+    kegg: 'enrichment/kegg'
+    logs: 'enrichment/logs'
 
 ########################################
 # config software path                 #
@@ -47,7 +52,8 @@ module_cmd:
     gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir} --sample_inf {t.sample_inf}'
     reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
   star_mapping:
-    run_star: '{t._star} --genomeDir {t.star_index}
+    run_star: 'mkdir -p {t.proj_dir}/{t._mapping_dir}/{t.sample}/ |
+    {t._star} --genomeDir {t.star_index}
                          --readFilesIn {t.clean_dir}/{t.sample}_1.{t.fq_suffix} {t.clean_dir}/{t.sample}_2.{t.fq_suffix}
                          --readFilesCommand zcat
                          --outFileNamePrefix {t.proj_dir}/{t._mapping_dir}/{t.sample}/
@@ -66,6 +72,14 @@ module_cmd:
                    samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
     star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
                            {t._R} {t._plot_script} --sample_inf {t.sample_inf} --mapping_stats {t.proj_dir}/{t._main_dir}/mapping_stats.plot --out_dir {t.proj_dir}/{t._main_dir}'
+  quick_enrich:
+    run_goseq: '{t._R} {t._run_goseq_script}
+                --name {t.name}
+                --gene_list {t.genes}
+                --go_anno {t.go}
+                --topgo_anno {t.topgo}
+                --gene_length {t.gene_length}
+                --out_dir {t.proj_dir}/{t._go_dir}/'
 
 
 
@@ -92,10 +106,21 @@ module_file:
       - 'mapping_stats.plot'
       - 'Rplots.pdf'
       - 'mapping_stats.report'
+      - '.report_files'
     pdf_files:
       - 'mapping_stats_plot.png'
       - 'mapping_stats.report'
       - 'mapping_stats.txt'
+  quick_enrich:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'Rplots.pdf'
+      - '.report_files'
 
+
+#################################################
+# file extensions                               #
+#################################################
 file_suffix:
   fq: 'clean.fq.gz'

@@ -1,11 +1,11 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
 from rnaseq.modules.base_module import prepare
-from rnaseq.modules.base_module import simple_task_test
+from rnaseq.modules.base_module import simple_task
 from rnaseq.modules.base_module import collection_task
 
 
@@ -23,7 +23,7 @@ class mapping_prepare_dir(prepare):
 
 
 @requires(mapping_prepare_dir)
-class run_star(simple_task_test):
+class run_star(simple_task):
     '''
     run star mapping using ENCODE options
     '''
@@ -39,7 +39,7 @@ class run_star(simple_task_test):
 
 
 @requires(run_star)
-class get_bam_file(simple_task_test):
+class get_bam_file(simple_task):
     '''
     1. link star output bam to bam dir
     2. make bam index
@@ -53,7 +53,7 @@ class get_bam_file(simple_task_test):
 
 
 @inherits(mapping_prepare_dir)
-class star_mapping_summary(simple_task_test):
+class star_mapping_summary(simple_task):
     '''
     combine mapping stats of all samples and plot
     '''
