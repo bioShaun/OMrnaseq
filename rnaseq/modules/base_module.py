@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import luigi
 import os
 from rnaseq.utils import config
@@ -74,12 +76,13 @@ class collection_task(luigi.Task):
 
     def run(self):
         ignore_files = config.module_file[self._module]['ignore_files']
-        pdf_report_files_pattern = config.module_file[self._module]['pdf_files']
-        pdf_report_files = rsync_pattern_to_file(
-            config.module_dir[self._module]['main'], pdf_report_files_pattern)
-        pdf_report_ini = os.path.join(
-            config.module_dir[self._module]['main'], '.report_files')
-        write_obj_to_file(pdf_report_files, pdf_report_ini)
+        if 'pdf_files' in config.module_file[self._module]:
+            pdf_report_files_pattern = config.module_file[self._module]['pdf_files']
+            pdf_report_files = rsync_pattern_to_file(
+                config.module_dir[self._module]['main'], pdf_report_files_pattern)
+            pdf_report_ini = os.path.join(
+                config.module_dir[self._module]['main'], '.report_files')
+            write_obj_to_file(pdf_report_files, pdf_report_ini)
         with self.output().open('w') as ignore_files_inf:
             for each_file in ignore_files:
                 ignore_files_inf.write('{}\n'.format(each_file))
