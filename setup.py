@@ -25,7 +25,8 @@ setup(
         'pyyaml',
         'envoy',
         'xlsxwriter',
-        'pandas'],
+        'pandas',
+        'rpy2'],
 )
 
 print '''------------------------------

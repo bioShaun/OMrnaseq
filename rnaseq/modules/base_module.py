@@ -91,3 +91,18 @@ class collection_task(luigi.Task):
         return luigi.LocalTarget('{main_dir}/.ignore'.format(
             main_dir=config.module_dir[self._module]['main']
         ))
+
+
+class cp_analysis_result(simple_task):
+
+    _tag = 'cp_results'
+    _module = 'test'
+    _main_dir = config.module_dir[_module]['main']
+    _result_dir = config.module_dir['result']['result']
+
+    def run(self):
+        _run_cmd = config.module_cmd['cp_results'].format(
+            t=self)
+        _process = envoy.run(_run_cmd)
+        with self.output().open('w') as simple_task_log:
+            simple_task_log.write(_process.std_err)
