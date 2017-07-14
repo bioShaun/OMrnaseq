@@ -2,6 +2,7 @@ suppressMessages(library(ggplot2))
 suppressMessages(library(reshape2))
 suppressMessages(library(scales))
 suppressMessages(library(argparser))
+suppressMessages(require('kimisc',quietly = T))
 options(stringsAsFactors = F)
 
 script_dir <- dirname(thisfile())
