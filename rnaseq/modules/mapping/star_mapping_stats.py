@@ -7,7 +7,7 @@ Usage:
 from docopt import docopt
 import pandas as pd
 from os import path
-
+import pandas.io.formats.excel
 
 def read_star_mapping_log(star_log_file):
     star_df = pd.read_table(star_log_file, header=None, sep='|', index_col=0)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     star_mapping_stats_txt = '{}.txt'.format(star_mapping_stats_prefix)
     star_log_out_df.to_csv(star_mapping_stats_txt, sep='\t')
     star_mapping_stats_excel = '{}.xlsx'.format(star_mapping_stats_prefix)
-    pd.formats.format.header_style = None
+    pandas.io.formats.excel.header_style = None
     writer = pd.ExcelWriter(star_mapping_stats_excel, engine='xlsxwriter', options={
                             'strings_to_urls': False})
     star_log_out_df.to_excel(writer, 'star_mapping_stats')
