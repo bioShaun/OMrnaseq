@@ -1,4 +1,7 @@
 import glob
+import pandas as pd
+import os
+import pandas.io.formats.excel
 import luigi
 import os
 from . import config
@@ -26,3 +29,16 @@ def write_obj_to_file(obj, fn, append=False):
     else:
         raise TypeError('invalid type for %s' % obj)
     fh.close()
+
+
+def txt_to_excel(txt_file, sheet_name='Sheet1'):
+    pandas.io.formats.excel.header_style = None
+    txt_df = pd.read_table(txt_file)
+    txt_file_name = os.path.basename(txt_file)
+    txt_file_dir = os.path.dirname(txt_file)
+    txt_file_prefix = os.path.splitext(txt_file_name)[0]
+    excel_file = os.path.join(txt_file_dir, '{}.xlsx'.format(txt_file_prefix))
+    writer = pd.ExcelWriter(excel_file, engine='xlsxwriter', options={
+                            'strings_to_urls': False})
+    txt_df.to_excel(writer, sheet_name, index=False)
+    writer.save()

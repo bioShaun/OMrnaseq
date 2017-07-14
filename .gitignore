@@ -105,3 +105,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+#kegg pathway database
+rnaseq/modules/enrichment/kegg_pathway
