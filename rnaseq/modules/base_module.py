@@ -37,6 +37,7 @@ class simple_task(luigi.Task):
     _tag = 'analysis'
     _run_cmd = None
     _module = 'test'
+    proj_dir = luigi.Parameter()
 
     def get_tag(self):
         return self._tag
@@ -50,7 +51,7 @@ class simple_task(luigi.Task):
 
     def output(self):
         _tag = self.get_tag()
-        return luigi.LocalTarget('{log_dir}/{t.__class__.__name__}.{tag}.log'.format(
+        return luigi.LocalTarget('{t.proj_dir}/{log_dir}/{t.__class__.__name__}.{tag}.log'.format(
             t=self, log_dir=config.module_dir[self._module]['logs'], tag=_tag
         ))
 
@@ -73,6 +74,7 @@ class collection_task(luigi.Task):
     .report_files: files needed for generate report
     '''
     _module = 'test'
+    proj_dir = luigi.Parameter()
 
     def run(self):
         ignore_files = config.module_file[self._module]['ignore_files']
@@ -88,8 +90,8 @@ class collection_task(luigi.Task):
                 ignore_files_inf.write('{}\n'.format(each_file))
 
     def output(self):
-        return luigi.LocalTarget('{main_dir}/.ignore'.format(
-            main_dir=config.module_dir[self._module]['main']
+        return luigi.LocalTarget('{t.proj_dir}/{main_dir}/.ignore'.format(
+            t=self, main_dir=config.module_dir[self._module]['main']
         ))
 
 
@@ -97,8 +99,6 @@ class cp_analysis_result(simple_task):
 
     _tag = 'cp_results'
     _module = 'test'
-    _main_dir = config.module_dir[_module]['main']
-    _result_dir = config.module_dir['result']['result']
 
     def run(self):
         _run_cmd = config.module_cmd['cp_results'].format(
