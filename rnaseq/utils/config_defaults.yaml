@@ -64,7 +64,7 @@ module_cmd:
     reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
   star_mapping:
     run_star: 'mkdir -p {t.proj_dir}/{t._mapping_dir}/{t.sample}/ |
-    {t._star} --genomeDir {t.star_index}
+               {t._star} --genomeDir {t.star_index}
                          --readFilesIn {t.clean_dir}/{t.sample}_1.{t.fq_suffix} {t.clean_dir}/{t.sample}_2.{t.fq_suffix}
                          --readFilesCommand zcat
                          --outFileNamePrefix {t.proj_dir}/{t._mapping_dir}/{t.sample}/
