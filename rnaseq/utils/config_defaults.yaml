@@ -38,6 +38,10 @@ module_dir:
     main: 'result'
     result: 'result/analysis_result'
     report: 'result/analysis_report'
+  qc:
+    main: 'qc'
+    logs: 'qc/logs'
+    data: 'qc/qc_data'
 
 ########################################
 # config software path                 #
@@ -121,6 +125,7 @@ module_cmd:
                --exclude-from={t._main_dir}/.ignore
                {t.proj_dir}/{t._main_dir}
                {t.proj_dir}/{t._result_dir}'
+  qc: 'zcat {t.clean_dir}/{t._sample}.{t._fq_sfx} | head -{t._datanum} | gzip > {1}'
 
 
 #################################################
