@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+
+import os
+import gzip
+import io
+import luigi
+from luigi.util import requires, inherits
+from rnaseq.modules.fastqc import fastqc
+from rnaseq.modules.mapping import star_mapping
+from rnaseq.utils import config
+from rnaseq.modules.base_module import prepare
+from rnaseq.modules.base_module import simple_task
+from rnaseq.modules.base_module import collection_task
+
+script_dir, script_name = os.path.split(os.path.abspath(__file__))
+MODULE, _ = os.path.splitext(script_name)
+DATA_NUM = 20000000
+
+
+class qc_prepare_dir(prepare):
+
+    _module = MODULE
+    clean_dir = luigi.Parameter()
+
+
+@requires(qc_prepare_dir)
+class get_qc_data(simple_task):
+    '''
+    get {num} reads of each sample for qc
+    '''.format(num=DATA_NUM)
+
+    _module = MODULE
+    sample = luigi.Parameter()
+    _log_dir = config.module_dir[MODULE]['logs']
+
+    def get_tag(self):
+        return self.sample
+
+    def run(self):
+        qc_data_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['data'])
+        fq_files = [
+            '{0}/{1}_{2}.clean.fq.gz'.format(self.clean_dir, self.sample, each) for each in (1, 2)]
+        qc_fq_files = [
+            '{0}/{1}_{2}.clean.fq.gz'.format(qc_data_dir, self.sample, each) for each in (1, 2)]
+        for n, each_fq in enumerate(fq_files):
+            with gzip.open(qc_fq_files[n], 'wb') as output_fq:
+                with gzip.open(each_fq, 'rb') as input_fq:
+                    br_input_fq = io.BufferedReader(input_fq)
+                    for n, eachline in enumerate(br_input_fq):
+                        if n < DATA_NUM:
+                            output_fq.write(eachline)
+        with self.output().open('w') as get_qc_data_log:
+            get_qc_data_log.write('get fastqc data.')
+
+
+@inherits(qc_prepare_dir)
+class mrna_qc_fastqc(simple_task):
+    '''
+    run fastqc on test data
+    '''
+
+    sample_inf = luigi.Parameter()
+    _module = MODULE
+
+    def requires(self):
+        sample_list = [each.strip().split()[1]
+                       for each in open(self.sample_inf)]
+        return [get_qc_data(clean_dir=self.clean_dir, sample=each_sample,
+                            proj_dir=self.proj_dir)
+                for each_sample in sample_list]
+
+    def run(self):
+        proj_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['main'])
+        qc_data_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['data'])
+        yield fastqc.fastqc_collection(clean_dir=qc_data_dir,
+                                       sample_inf=self.sample_inf,
+                                       proj_dir=proj_dir)
+        with self.output().open('w') as mrna_qc_fastqc_log:
+            mrna_qc_fastqc_log.write('run fastqc.')
+
+
+@requires(mrna_qc_fastqc)
+class mrna_qc_mapping(simple_task):
+    '''
+    run mapping on test data
+    '''
+
+    _module = MODULE
+    star_index = luigi.Parameter()
+
+    def run(self):
+        proj_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['main'])
+        qc_data_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['data'])
+        yield star_mapping.star_mapping_collection(clean_dir=qc_data_dir,
+                                                   sample_inf=self.sample_inf,
+                                                   proj_dir=proj_dir,
+                                                   star_index=self.star_index)
+        with self.output().open('w') as mrna_qc_fastqc_log:
+            mrna_qc_fastqc_log.write('run mapping.')
+
+
+if __name__ == '__main__':
+    luigi.run()
