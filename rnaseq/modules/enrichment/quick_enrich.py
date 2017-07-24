@@ -34,7 +34,6 @@ class q_enrich_prepare_dir(prepare):
 @requires(q_enrich_prepare_dir)
 class run_goseq(simple_task):
 
-    _R = config.module_software['Rscript']
     _run_goseq_script = GOSEQ_R
     name = luigi.Parameter()
     genes = luigi.Parameter()
@@ -48,7 +47,6 @@ class run_goseq(simple_task):
 
 @requires(q_enrich_prepare_dir)
 class run_kobas(simple_task):
-    _R = config.module_software['Rscript']
     _module = MODULE
     _extract_inf_py = EXTRACT_INF_PY
     _blast_dir = config.module_dir[MODULE]['blast']

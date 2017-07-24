@@ -22,14 +22,16 @@ class prepare(luigi.Task):
                 os.makedirs(each_module_dir)
             except OSError:
                 prepare_dir_log_list.append(
-                    '{each_module_dir} has been built before.\n'.format(**locals()))
+                    '{_dir} has been built before.\n'.format(
+                        _dir=each_module_dir
+                    ))
         with self.output().open('w') as prepare_dir_log:
             for eachline in prepare_dir_log_list:
                 prepare_dir_log.write(eachline)
 
     def output(self):
-        return luigi.LocalTarget('{t.proj_dir}/{log_dir}/prepare_dir.log'.format(
-            t=self, log_dir=config.module_dir[self._module]['logs']))
+        return luigi.LocalTarget('{t.proj_dir}/{_dir}/prepare_dir.log'.format(
+            t=self, _dir=config.module_dir[self._module]['logs']))
 
 
 class simple_task(luigi.Task):
@@ -37,12 +39,14 @@ class simple_task(luigi.Task):
     _tag = 'analysis'
     _module = 'test'
     proj_dir = luigi.Parameter()
+    _R = config.module_software['Rscript']
 
     def get_tag(self):
         return self._tag
 
     def run(self):
-        _run_cmd = config.module_cmd[self._module][self.__class__.__name__].format(
+        class_name = self.__class__.__name__
+        _run_cmd = config.module_cmd[self._module][class_name].format(
             t=self)
         _process = envoy.run(_run_cmd)
         with self.output().open('w') as simple_task_log:
@@ -50,15 +54,18 @@ class simple_task(luigi.Task):
 
     def output(self):
         _tag = self.get_tag()
-        return luigi.LocalTarget('{t.proj_dir}/{log_dir}/{t.__class__.__name__}.{tag}.log'.format(
-            t=self, log_dir=config.module_dir[self._module]['logs'], tag=_tag
+        class_name = self.__class__.__name__
+        return luigi.LocalTarget('{t.proj_dir}/{_dir}/{name}.{tag}.log'.format(
+            t=self, _dir=config.module_dir[self._module]['logs'],
+            name=class_name, tag=_tag
         ))
 
 
 class simple_task_test(simple_task):
 
     def run(self):
-        _run_cmd = config.module_cmd[self._module][self.__class__.__name__].format(
+        class_name = self.__class__.__name__
+        _run_cmd = config.module_cmd[self._module][class_name].format(
             t=self)
         # _process = envoy.run(_run_cmd)
         with self.output().open('w') as simple_task_log:
@@ -76,13 +83,14 @@ class collection_task(luigi.Task):
     proj_dir = luigi.Parameter()
 
     def run(self):
+        pdf_report_ini = os.path.join(
+            self.proj_dir, config.module_dir[self._module]['main'])
         ignore_files = config.module_file[self._module]['ignore_files']
         if 'pdf_files' in config.module_file[self._module]:
-            pdf_report_files_pattern = config.module_file[self._module]['pdf_files']
             pdf_report_files = rsync_pattern_to_file(
-                config.module_dir[self._module]['main'], pdf_report_files_pattern)
+                pdf_report_ini, config.module_file[self._module]['pdf_files'])
             pdf_report_ini = os.path.join(
-                config.module_dir[self._module]['main'], '.report_files')
+                pdf_report_ini, '.report_files')
             write_obj_to_file(pdf_report_files, pdf_report_ini)
         with self.output().open('w') as ignore_files_inf:
             for each_file in ignore_files:

@@ -63,20 +63,21 @@ class star_mapping_summary(simple_task):
     _plot_script = STAR_MAPPING_STATS_PLOT
     _mapping_dir = config.module_dir[MODULE]['map']
     _main_dir = config.module_dir[MODULE]['main']
-    _R = config.module_software['Rscript']
     _module = MODULE
 
     def requires(self):
         sample_list = [each.strip().split()[1]
                        for each in open(self.sample_inf)]
-        return [get_bam_file(sample=each_sample, proj_dir=self.proj_dir, clean_dir=self.clean_dir, star_index=self.star_index)
+        return [get_bam_file(sample=each_sample,
+                             proj_dir=self.proj_dir,
+                             clean_dir=self.clean_dir,
+                             star_index=self.star_index)
                 for each_sample in sample_list]
 
 
 @requires(star_mapping_summary)
 class star_mapping_collection(collection_task):
     _module = MODULE
-    pass
 
 
 if __name__ == '__main__':

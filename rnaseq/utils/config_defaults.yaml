@@ -27,11 +27,10 @@ module_dir:
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
     logs: 'mapping/logs'
-  quick_enrich:
+  quick_enrich: &quick_enrich
     main: 'enrichment'
     go: 'enrichment/go'
     kegg: 'enrichment/kegg'
-    pathway: 'enrichment/kegg'
     blast: 'enrichment/blasttab'
     logs: 'enrichment/logs'
   quant:
@@ -40,6 +39,8 @@ module_dir:
     exp: 'quantification/expression_summary'
     kallisto: 'quantification/kallisto'
     logs: 'quantification/logs'
+  enrich:
+    <<: *quick_enrich
   result:
     main: 'result'
     result: 'result/analysis_result'
@@ -112,7 +113,15 @@ module_cmd:
                --compare {t.compare}
                --sample_inf {t.sample_inf}
                --gene2tr {t.gene2tr}
-               --out_dir {t.proj_dir}/{t.diff_dir}/{t.compare}'
+               --out_dir {t.proj_dir}/{t.diff_dir}/{t.compare}
+               --qvalue {t.qvalue}
+               --logfc {t.logfc}'
+    quant_report_data: '{t._R} {t._quant_report_r}
+                        --exp_dir {t.proj_dir}/{t.exp_dir}
+                        --diff_dir {t.proj_dir}/{t.diff_dir}
+                        --sample_inf {t.sample_inf}
+                        --qvalue {t.qvalue}
+                        --logfc {t.logfc}'
   quick_enrich:
     run_goseq: '{t._R} {t._run_goseq_script}
                 --name {t.name}
@@ -181,6 +190,22 @@ module_file:
       - 'mapping_stats_plot.png'
       - 'mapping_stats.report'
       - 'mapping_stats.txt'
+  quant:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'kallisto/*/run_info.json'
+      - '.report_files'
+      - 'Rplots.pdf'
+      - 'expression_summary/pdf.*'
+      - 'expression_summary/html.*'
+    pdf_files:
+      - 'expression_summary/*.png'
+      - 'differential_analysis/*/*png'
+      - 'expression_summary/*Gene.tpm.txt'
+      - 'expression_summary/*example.diff.table.txt'
+      - 'differential_analysis/*/*.edgeR.DE_results.txt'
+
   quick_enrich:
     ignore_files:
       - '.ignore'

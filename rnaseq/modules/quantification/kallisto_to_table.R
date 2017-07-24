@@ -8,7 +8,7 @@ suppressMessages(library(gplots))
 suppressMessages(library(xlsx))
 suppressMessages(library(tibble))
 suppressMessages(library(rhdf5))
-suppressMessages(require('kimisc',quietly = T))
+suppressMessages(require(kimisc))
 options(stringsAsFactors = F)
 
 script_dir <- dirname(thisfile())
