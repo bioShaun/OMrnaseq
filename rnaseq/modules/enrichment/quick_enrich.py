@@ -22,6 +22,7 @@ ENRICH_PLOT = os.path.join(script_dir, 'simple_enrich_plot.R')
 
 
 class q_enrich_prepare_dir(prepare):
+
     _module = MODULE
     go = luigi.Parameter()
     topgo = luigi.Parameter()
@@ -47,6 +48,7 @@ class run_goseq(simple_task):
 
 @requires(q_enrich_prepare_dir)
 class run_kobas(simple_task):
+
     _module = MODULE
     _extract_inf_py = EXTRACT_INF_PY
     _blast_dir = config.module_dir[MODULE]['blast']
@@ -62,12 +64,14 @@ class run_kobas(simple_task):
 
 @requires(run_kobas)
 class run_pathway(run_kobas):
+
     _module = MODULE
     _pathway_py = KEGG_PATHWAY_PY
 
 
 @inherits(q_enrich_prepare_dir)
 class q_enrich_collection(collection_task):
+
     _module = MODULE
     gene_files = luigi.Parameter()
 
@@ -102,6 +106,7 @@ class q_enrich_collection(collection_task):
 
 @requires(q_enrich_collection)
 class q_enrich_result(cp_analysis_result):
+
     _module = MODULE
     _main_dir = config.module_dir[_module]['main']
     _result_dir = config.module_dir['result']['main']

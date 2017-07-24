@@ -129,7 +129,7 @@ module_cmd:
                 --go_anno {t.go}
                 --topgo_anno {t.topgo}
                 --gene_length {t.gene_length}
-                --out_dir {t.proj_dir}/{t._go_dir}/ |
+                --out_dir {t.proj_dir}/{t._go_dir}/{t.name} |
                 {t._R} {t._plot_enrich}
                 --enrich_table {t.proj_dir}/{t._go_dir}/{t.name}/{t.name}.go.enrichment.txt'
     run_kobas: 'python {t._extract_inf_py}
@@ -154,6 +154,45 @@ module_cmd:
                   --blast_out {t.proj_dir}/{t._blast_dir}/{t.name}.blasttab
                   --species {t.sp}
                   --out_dir {t.proj_dir}/{t._kegg_dir}/{t.name}/pathway'
+  enrich:
+    run_goseq: '{t._R} {t._run_goseq_script}
+                --name {t.compare}.{t.reg}
+                --gene_list {t.genes}
+                --go_anno {t.go}
+                --topgo_anno {t.topgo}
+                --gene_length {t.gene_length}
+                --out_dir {t.proj_dir}/{t.go_dir}/{t.compare}'
+    run_kobas: 'python {t._extract_inf_py}
+                --id {t.genes}
+                --table {t.kegg}
+                --output {t.proj_dir}/{t.blast_dir}/{t.compare}.{t.reg}.blasttab |
+                mkdir -p {t.proj_dir}/{t.kegg_dir}/{t.compare} |
+                run_kobas.py
+                -i {t.proj_dir}/{t.blast_dir}/{t.compare}.{t.reg}.blasttab
+                -t blastout:tab
+                -s {t.sp}
+                -b {t.kegg_bg}
+                -d K
+                -o {t.proj_dir}/{t.kegg_dir}/{t.compare}/{t.compare}.{t.reg}.kegg.enrichment.txt |
+                python {t._treat_table_py}
+                -k {t.proj_dir}/{t.kegg_dir}/{t.compare}/{t.compare}.{t.reg}.kegg.enrichment.txt'
+    run_pathway : 'mkdir -p {t.proj_dir}/{t.kegg_dir}/{t.compare}/{t.compare}.{t.reg}.pathway |
+                   python {t._pathway_py}
+                   --kegg_table {t.proj_dir}/{t.kegg_dir}/{t.compare}/{t.compare}.{t.reg}.kegg.enrichment.txt
+                   --blast_out {t.proj_dir}/{t.blast_dir}/{t.compare}.{t.reg}.blasttab
+                   --species {t.sp}
+                   --out_dir {t.proj_dir}/{t.kegg_dir}/{t.compare}/{t.compare}.{t.reg}.pathway
+                   --diff_out {t.proj_dir}/{t.diff_dir}/{t.compare}/{t.compare}.{t.diff_sfx}'
+    run_enrich_barplot: '{t._R} {t._enrich_plot}
+                         --anno {t.go}
+                         --table {t.proj_dir}/{t.go_dir}/{t.compare}/
+                         --diff {t.proj_dir}/{t.diff_dir}/{t.compare}/
+                         --type go |
+                         {t._R} {t._enrich_plot}
+                         --anno {t.kegg}
+                         --table {t.proj_dir}/{t.kegg_dir}/{t.compare}/
+                         --diff {t.proj_dir}/{t.diff_dir}/{t.compare}/
+                         --type kegg'
   cp_results: 'rsync
                -av
                --copy-links
@@ -205,7 +244,27 @@ module_file:
       - 'expression_summary/*Gene.tpm.txt'
       - 'expression_summary/*example.diff.table.txt'
       - 'differential_analysis/*/*.edgeR.DE_results.txt'
-
+  enrich:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'kegg/blast_out'
+      - 'kegg/kegg_pathway_logs'
+      - '.report_files'
+      - 'report.go.table.txt'
+      - 'report.kegg.table.txt'
+      - 'CC.GO.DAG.png'
+      - 'MF.GO.DAG.png'
+      - 'BP.GO.DAG.png'
+      - 'go.enrichment.barplot.png'
+      - 'kegg.enrichment.barplot.png'
+      - 'kegg.pathview.png'
+    pdf_files:
+      - 'go/*/*go.enrichment.barplot.png'
+      - 'kegg/*/*kegg.enrichment.barplot.png'
+      - 'go/*/DAG/ALL*png'
+      - 'go/*/*.ALL.go.enrichment.txt'
+      - 'kegg/*/*ALL.kegg.enrichment.txt'
   quick_enrich:
     ignore_files:
       - '.ignore'
@@ -220,6 +279,8 @@ module_file:
 #################################################
 file_suffix:
   fq: 'clean.fq.gz'
+  diff_list: 'edgeR.DE_results.diffgenes.txt'
+  diff_table: 'edgeR.DE_results.txt'
 
 
 #################################################
