@@ -27,13 +27,20 @@ module_dir:
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
     logs: 'mapping/logs'
-  quick_enrich:
+  quick_enrich: &quick_enrich
     main: 'enrichment'
     go: 'enrichment/go'
     kegg: 'enrichment/kegg'
-    pathway: 'enrichment/kegg'
     blast: 'enrichment/blasttab'
     logs: 'enrichment/logs'
+  quant:
+    main: 'quantification'
+    diff: 'quantification/differential_analysis'
+    exp: 'quantification/expression_summary'
+    kallisto: 'quantification/kallisto'
+    logs: 'quantification/logs'
+  enrich:
+    <<: *quick_enrich
   result:
     main: 'result'
     result: 'result/analysis_result'
@@ -50,6 +57,7 @@ module_software:
   fastqc: 'fastqc'
   Rscript: 'Rscript'
   star_mapping: 'STAR'
+  kallisto: 'kallisto'
 
 
 ########################################
@@ -87,6 +95,33 @@ module_cmd:
                    samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
     star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
                            {t._R} {t._plot_script} --sample_inf {t.sample_inf} --mapping_stats {t.proj_dir}/{t._main_dir}/mapping_stats.plot --out_dir {t.proj_dir}/{t._main_dir}'
+  quant:
+    run_kallisto: '{t._kallisto} quant
+                  -i {t.tr_index}
+                  --bootstrap-samples=100
+                  --output-dir {t.proj_dir}/{t.kallisto_dir}/{t.sample}
+                  {t.clean_dir}/{t.sample}_1.{t.fq_suffix}
+                  {t.clean_dir}/{t.sample}_2.{t.fq_suffix}'
+    kallisto_to_matrix: '{t._R} {t._kallisto_to_table_r}
+                         --kallisto_dir {t.proj_dir}/{t.kallisto_dir}
+                         --sample_inf {t.sample_inf}
+                         --gene2tr {t.gene2tr}
+                         --out_dir {t.proj_dir}/{t.exp_dir}'
+    run_diff: '{t._R} {t._diff_analysis_r}
+               --kallisto_dir {t.proj_dir}/{t.kallisto_dir}
+               --tpm_table {t.proj_dir}/{t.exp_dir}/Gene.tpm.txt
+               --compare {t.compare}
+               --sample_inf {t.sample_inf}
+               --gene2tr {t.gene2tr}
+               --out_dir {t.proj_dir}/{t.diff_dir}/{t.compare}
+               --qvalue {t.qvalue}
+               --logfc {t.logfc}'
+    quant_report_data: '{t._R} {t._quant_report_r}
+                        --exp_dir {t.proj_dir}/{t.exp_dir}
+                        --diff_dir {t.proj_dir}/{t.diff_dir}
+                        --sample_inf {t.sample_inf}
+                        --qvalue {t.qvalue}
+                        --logfc {t.logfc}'
   quick_enrich:
     run_goseq: '{t._R} {t._run_goseq_script}
                 --name {t.name}
@@ -125,7 +160,6 @@ module_cmd:
                --exclude-from={t._main_dir}/.ignore
                {t.proj_dir}/{t._main_dir}
                {t.proj_dir}/{t._result_dir}'
-  qc: 'zcat {t.clean_dir}/{t._sample}.{t._fq_sfx} | head -{t._datanum} | gzip > {1}'
 
 
 #################################################
@@ -156,6 +190,22 @@ module_file:
       - 'mapping_stats_plot.png'
       - 'mapping_stats.report'
       - 'mapping_stats.txt'
+  quant:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'kallisto/*/run_info.json'
+      - '.report_files'
+      - 'Rplots.pdf'
+      - 'expression_summary/pdf.*'
+      - 'expression_summary/html.*'
+    pdf_files:
+      - 'expression_summary/*.png'
+      - 'differential_analysis/*/*png'
+      - 'expression_summary/*Gene.tpm.txt'
+      - 'expression_summary/*example.diff.table.txt'
+      - 'differential_analysis/*/*.edgeR.DE_results.txt'
+
   quick_enrich:
     ignore_files:
       - '.ignore'
