@@ -35,7 +35,6 @@ class prepare(luigi.Task):
 class simple_task(luigi.Task):
 
     _tag = 'analysis'
-    _run_cmd = None
     _module = 'test'
     proj_dir = luigi.Parameter()
 
@@ -99,6 +98,7 @@ class cp_analysis_result(simple_task):
 
     _tag = 'cp_results'
     _module = 'test'
+    proj_dir = luigi.Parameter()
 
     def run(self):
         _run_cmd = config.module_cmd['cp_results'].format(

@@ -34,6 +34,12 @@ module_dir:
     pathway: 'enrichment/kegg'
     blast: 'enrichment/blasttab'
     logs: 'enrichment/logs'
+  quant:
+    main: 'quantification'
+    diff: 'quantification/differential_analysis'
+    exp: 'quantification/expression_summary'
+    kallisto: 'quantification/kallisto'
+    logs: 'quantification/logs'
   result:
     main: 'result'
     result: 'result/analysis_result'
@@ -50,6 +56,7 @@ module_software:
   fastqc: 'fastqc'
   Rscript: 'Rscript'
   star_mapping: 'STAR'
+  kallisto: 'kallisto'
 
 
 ########################################
@@ -87,6 +94,18 @@ module_cmd:
                    samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
     star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
                            {t._R} {t._plot_script} --sample_inf {t.sample_inf} --mapping_stats {t.proj_dir}/{t._main_dir}/mapping_stats.plot --out_dir {t.proj_dir}/{t._main_dir}'
+  quant:
+    run_kallisto: '{t._kallisto} quant
+                  -i {t.tr_index}
+                  --bootstrap-samples=100
+                  --output-dir {t.proj_dir}/{t.kallisto_dir}/{t.sample}
+                  {t.clean_dir}/{t.sample}_1.{t.fq_suffix}
+                  {t.clean_dir}/{t.sample}_2.{t.fq_suffix}'
+    kallisto_to_matrix: '{t._R} {t._kallisto_to_table_r}
+                         --kallisto_dir {t.proj_dir}/{t.kallisto_dir}
+                         --sample_inf {t.sample_inf}
+                         --gene2tr {t.gene2tr}
+                         --out_dir {t.proj_dir}/{t.exp_dir}'
   quick_enrich:
     run_goseq: '{t._R} {t._run_goseq_script}
                 --name {t.name}
@@ -125,7 +144,6 @@ module_cmd:
                --exclude-from={t._main_dir}/.ignore
                {t.proj_dir}/{t._main_dir}
                {t.proj_dir}/{t._result_dir}'
-  qc: 'zcat {t.clean_dir}/{t._sample}.{t._fq_sfx} | head -{t._datanum} | gzip > {1}'
 
 
 #################################################
