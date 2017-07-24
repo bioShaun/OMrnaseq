@@ -106,6 +106,13 @@ module_cmd:
                          --sample_inf {t.sample_inf}
                          --gene2tr {t.gene2tr}
                          --out_dir {t.proj_dir}/{t.exp_dir}'
+    run_diff: '{t._R} {t._diff_analysis_r}
+               --kallisto_dir {t.proj_dir}/{t.kallisto_dir}
+               --tpm_table {t.proj_dir}/{t.exp_dir}/Gene.tpm.txt
+               --compare {t.compare}
+               --sample_inf {t.sample_inf}
+               --gene2tr {t.gene2tr}
+               --out_dir {t.proj_dir}/{t.diff_dir}/{t.compare}'
   quick_enrich:
     run_goseq: '{t._R} {t._run_goseq_script}
                 --name {t.name}

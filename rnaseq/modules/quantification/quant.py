@@ -12,7 +12,7 @@ from rnaseq.modules.base_module import collection_task
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 MODULE, _ = os.path.splitext(script_name)
 KALLISTO_TO_TABLE = os.path.join(script_dir, 'kallisto_to_table.R')
-DIFF_ANALYSIS
+DIFF_ANALYSIS = os.path.join(script_dir, 'diff_analysis.R')
 
 
 class quant_prepare_dir(prepare):
@@ -67,6 +67,16 @@ class run_diff(simple_task):
     run diff analysis for each compare
     '''
     compare = luigi.Parameter()
+    _module = MODULE
+    _R = config.module_software['Rscript']
+    _diff_analysis_r = DIFF_ANALYSIS
+    kallisto_dir = config.module_dir[MODULE]['kallisto']
+    exp_dir = config.module_dir[MODULE]['exp']
+    diff_dir = config.module_dir[MODULE]['diff']
+
+    def get_tag(self):
+        return self.compare
+
 
 
 
