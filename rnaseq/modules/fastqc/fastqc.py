@@ -45,12 +45,13 @@ class fastqc_summary(simple_task):
     sample_inf = luigi.Parameter()
     _module = MODULE
     _script = FASTQC_SUMMERY
-    _dir=config.module_dir[MODULE]['main']
+    _dir = config.module_dir[MODULE]['main']
 
     def requires(self):
         sample_list = [each.strip().split()[1]
                        for each in open(self.sample_inf)]
-        return [run_fastqc(sample=each_sample, clean_dir=self.clean_dir, proj_dir=self.proj_dir) for each_sample in sample_list]
+        return [run_fastqc(sample=sample, clean_dir=self.clean_dir,
+                           proj_dir=self.proj_dir) for sample in sample_list]
 
 
 @requires(fastqc_summary)
@@ -59,7 +60,6 @@ class gc_plot(simple_task):
     plot gc graph
     '''
     _module = MODULE
-    _R = config.module_software['Rscript']
     _script = GC_PLOT_R
     _dir = config.module_dir[MODULE]['gc']
 
@@ -70,7 +70,6 @@ class reads_quality_plot(simple_task):
     plot reads quality
     '''
     _module = MODULE
-    _R = config.module_software['Rscript']
     _script = RQ_PLOT_R
     _dir = config.module_dir[MODULE]['reads_quality']
 
