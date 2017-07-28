@@ -65,7 +65,8 @@ class assembly_stringtie_m(simple_task):
                        for each in open(self.sample_inf)]
         return [assembly_stringtie_a(sample=sample, bam_dir=self.bam_dir,
                                      gtf=self.gtf, proj_dir=self.proj_dir,
-                                     ) for sample in sample_list]
+                                     genome_fa=self.genome_fa)
+                for sample in sample_list]
 
 
 @requires(assembly_stringtie_m)
