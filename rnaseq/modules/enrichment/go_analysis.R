@@ -26,10 +26,9 @@ name <- argv$name
 go_anno_file <- argv$go_anno
 topgo_anno_file <- argv$topgo_anno
 gene_length_file <- argv$gene_length
-out_dir <- argv$out_dir
+go_out_dir <- argv$out_dir
 
 ## output directories
-go_out_dir <- file.path(out_dir, name)
 dir.create(go_out_dir, recursive = 1, showWarnings = F)
 togo_dir <- file.path(go_out_dir, 'DAG')
 dir.create(togo_dir, recursive = 1, showWarnings = F)

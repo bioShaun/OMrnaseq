@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+import os
+import luigi
+from luigi.util import requires, inherits
+from rnaseq.utils import config
+from rnaseq.modules.fastqc import fastqc
+from rnaseq.modules.quantification import quant
+from rnaseq.modules.enrichment import enrich
+from rnaseq.modules.base_module import prepare, simple_task, cp_analysis_result
+
+
+script_dir, script_name = os.path.split(os.path.abspath(__file__))
+MODULE, _ = os.path.splitext(script_name)
+
+
+class pipe_prepare(prepare):
+    _module = MODULE
+
+
+@requires(fastqc.fastqc_collection)
+class pipe_fastqc(cp_analysis_result):
+    _module = MODULE
+    main_dir = config.module_dir['fastqc']['main']
+    result_dir = config.module_dir['result']['result']
+
+
+@requires(quant.quant_collection)
+class pipe_quant(cp_analysis_result):
+    _module = MODULE
+    main_dir = config.module_dir['quant']['main']
+    result_dir = config.module_dir['result']['result']
+
+
+@requires(enrich.enrich_collection)
+class pipe_enrich(cp_analysis_result):
+    _module = MODULE
+    main_dir = config.module_dir['enrich']['main']
+    result_dir = config.module_dir['result']['result']
+
+
+if __name__ == '__main__':
+    luigi.run()

@@ -2,4 +2,5 @@
 
 ## fastqc module
 ## mapping module
+## quant module
 ## quick enrich module
