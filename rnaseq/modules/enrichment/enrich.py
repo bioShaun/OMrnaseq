@@ -39,8 +39,8 @@ class run_goseq(simple_task):
     compare = luigi.Parameter()
     reg = luigi.Parameter()
     genes = luigi.Parameter()
-    go_dir = config.module_dir[MODULE]['go']
     _module = MODULE
+    go_dir = config.module_dir[MODULE]['go']
 
     def get_tag(self):
         return '{t.compare}.{t.reg}'.format(t=self)
@@ -51,12 +51,12 @@ class run_kobas(simple_task):
 
     _module = MODULE
     _extract_inf_py = EXTRACT_INF_PY
-    blast_dir = config.module_dir[MODULE]['blast']
-    kegg_dir = config.module_dir[MODULE]['kegg']
     _treat_table_py = TREAT_KEGG_OUT
     compare = luigi.Parameter()
     reg = luigi.Parameter()
     genes = luigi.Parameter()
+    blast_dir = config.module_dir[MODULE]['blast']
+    kegg_dir = config.module_dir[MODULE]['kegg']
 
     def get_tag(self):
         return '{t.compare}.{t.reg}'.format(t=self)
@@ -67,8 +67,10 @@ class run_pathway(run_kobas):
 
     _module = MODULE
     _pathway_py = KEGG_PATHWAY_PY
-    diff_sfx = config.file_suffix['diff_table']
     diff_dir = config.module_dir['quant']['diff']
+    diff_sfx = config.file_suffix['diff_table']
+    blast_dir = config.module_dir[MODULE]['blast']
+    kegg_dir = config.module_dir[MODULE]['kegg']
 
 
 @inherits(enrich_prepare)
@@ -104,10 +106,14 @@ class run_enrich_barplot(simple_task):
                              sp=self.sp, kegg_bg=self.kegg_bg), )
                 for n, r in enumerate(reg_list)]
 
+    def get_tag(self):
+        return self.compare
+
 
 @inherits(enrich_prepare)
-class enrichment_collection(collection_task):
+class enrich_collection(collection_task):
 
+    _module = MODULE
     sample_inf = luigi.Parameter()
 
     def requires(self):

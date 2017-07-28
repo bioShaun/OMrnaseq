@@ -108,8 +108,8 @@ class q_enrich_collection(collection_task):
 class q_enrich_result(cp_analysis_result):
 
     _module = MODULE
-    _main_dir = config.module_dir[_module]['main']
-    _result_dir = config.module_dir['result']['main']
+    main_dir = config.module_dir[_module]['main']
+    result_dir = config.module_dir['result']['main']
 
 
 if __name__ == '__main__':

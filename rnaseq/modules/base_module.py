@@ -44,7 +44,11 @@ class simple_task(luigi.Task):
     def get_tag(self):
         return self._tag
 
+    def treat_parameter(self):
+        pass
+
     def run(self):
+        self.treat_parameter()
         class_name = self.__class__.__name__
         _run_cmd = config.module_cmd[self._module][class_name].format(
             t=self)

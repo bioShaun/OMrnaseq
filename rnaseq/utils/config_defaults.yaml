@@ -27,6 +27,11 @@ module_dir:
     bam: 'mapping/bam_dir'
     map: 'mapping/mapping_dir'
     logs: 'mapping/logs'
+  assembly:
+    main: 'assembly'
+    assemble: 'assembly/assemble'
+    merge: 'assembly/merge'
+    logs: 'assembly/logs'
   quick_enrich: &quick_enrich
     main: 'enrichment'
     go: 'enrichment/go'
@@ -41,6 +46,10 @@ module_dir:
     logs: 'quantification/logs'
   enrich:
     <<: *quick_enrich
+  _module_summary:
+    logs: 'logs'
+    result: 'result/analysis_result'
+    report: 'result/analysis_report'
   result:
     main: 'result'
     result: 'result/analysis_result'
@@ -58,6 +67,20 @@ module_software:
   Rscript: 'Rscript'
   star_mapping: 'STAR'
   kallisto: 'kallisto'
+  stringtie: 'stringtie'
+  gffread: 'gffread'
+
+
+##############################################
+# config command parameters for each module  #
+##############################################
+
+module_para:
+  assembly:
+    without_gtf: '{t.bam} -p {t._thread} -o {t.output}'
+    with_gtf: '-G '
+
+
 
 
 ########################################
@@ -95,6 +118,26 @@ module_cmd:
                    samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
     star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
                            {t._R} {t._plot_script} --sample_inf {t.sample_inf} --mapping_stats {t.proj_dir}/{t._main_dir}/mapping_stats.plot --out_dir {t.proj_dir}/{t._main_dir}'
+  assembly:
+    assembly_stringtie_a: '{t._stringtie}
+                           {t.gtf}
+                           -p {t.thread}
+                           -o {t.proj_dir}/{t.assemble_dir}/{t.sample}.gtf
+                           {t.bam_dir}/{t.sample}.bam'
+    assembly_stringtie_m: '{t._stringtie} --merge
+                           {t.gtf}
+                           -o {t.proj_dir}/{t.merge_dir}/{t.merge_gtf}
+                           {t.proj_dir}/{t.assemble_dir}/gtf.list'
+    assembly_quant_prepare: '{t._gffread}
+                             {t.proj_dir}/{t.merge_dir}/{t.merge_gtf}
+                             -g {t.genome_fa}
+                             -w {t.proj_dir}/{t.merge_dir}/{t.merge_fa} |
+                             python {t._gene_tr_map_py}
+                             --gff {t.proj_dir}/{t.merge_dir}/{t.merge_gtf}
+                             --out_dir {t.proj_dir}/{t.merge_dir}/ |
+                             {t._kallisto} index
+                             -i {t.proj_dir}/{t.merge_dir}/{t.merge_fa}.kallisto_idx
+                             {t.proj_dir}/{t.merge_dir}/{t.merge_fa}'
   quant:
     run_kallisto: '{t._kallisto} quant
                   -i {t.tr_index}
@@ -196,9 +239,9 @@ module_cmd:
   cp_results: 'rsync
                -av
                --copy-links
-               --exclude-from={t._main_dir}/.ignore
-               {t.proj_dir}/{t._main_dir}
-               {t.proj_dir}/{t._result_dir}'
+               --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
+               {t.proj_dir}/{t.main_dir}
+               {t.proj_dir}/{t.result_dir}'
 
 
 #################################################
@@ -238,6 +281,7 @@ module_file:
       - 'Rplots.pdf'
       - 'expression_summary/pdf.*'
       - 'expression_summary/html.*'
+      - 'expression_summary/ALL.Volcano_plot.p*'
     pdf_files:
       - 'expression_summary/*.png'
       - 'differential_analysis/*/*png'
@@ -248,8 +292,7 @@ module_file:
     ignore_files:
       - '.ignore'
       - 'logs'
-      - 'kegg/blast_out'
-      - 'kegg/kegg_pathway_logs'
+      - 'blasttab'
       - '.report_files'
       - 'report.go.table.txt'
       - 'report.kegg.table.txt'
@@ -275,12 +318,15 @@ module_file:
 
 
 #################################################
-# file extensions                               #
+# file names                                    #
 #################################################
 file_suffix:
   fq: 'clean.fq.gz'
   diff_list: 'edgeR.DE_results.diffgenes.txt'
   diff_table: 'edgeR.DE_results.txt'
+  assembly:
+    merge_gtf: 'merged.gtf'
+    merge_fa: 'merged.fa'
 
 
 #################################################

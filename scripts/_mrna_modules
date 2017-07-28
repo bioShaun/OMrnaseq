@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import luigi
+from luigi.util import requires, inherits
+from rnaseq.modules.fastqc import fastqc
+from rnaseq.modules.quantification import quant
+from rnaseq.modules.enrichment import enrich
+from rnaseq.modules.base_module import simple_task
+
+
+@requires(fastqc.fastqc_collection)
+
+
+if __name__ == '__main__':
+    luigi.run()
