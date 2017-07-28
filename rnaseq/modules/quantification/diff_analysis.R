@@ -17,14 +17,15 @@ source(lib_path)
 
 
 p <- arg_parser("perform differential analysis")
-p <- add_argument(p, '--kallisto_dir',  help = 'kallisto quantification directory')
-p <- add_argument(p, '--tpm_table',  help = 'quantification normalized tpm table')
-p <- add_argument(p, '--compare',  help = 'compare name')
+p <- add_argument(p, '--kallisto_dir', help = 'kallisto quantification directory')
+p <- add_argument(p, '--tpm_table', help = 'quantification normalized tpm table')
+p <- add_argument(p, '--compare', help = 'compare name')
 p <- add_argument(p, '--sample_inf', help = 'sample information with sample names and group names')
-p <- add_argument(p, '--gene2tr',    help = 'gene id and transcript id mapping file')
+p <- add_argument(p, '--gene2tr', help = 'gene id and transcript id mapping file')
 p <- add_argument(p, '--out_dir', help = 'output directory')
-p <- add_argument(p, '--qvalue',     help = 'diff gene qvalue cutoff', default = 0.05)
-p <- add_argument(p, '--logfc',      help = 'diff gene logfc cutoff',  default = 1)
+p <- add_argument(p, '--qvalue', help = 'diff gene qvalue cutoff', default = 0.05)
+p <- add_argument(p, '--logfc', help = 'diff gene logfc cutoff',  default = 1)
+p <- add_argument(p, '--dispersion', help = 'for analysis with no replicates',  default = 0.1)
 argv <- parse_args(p)
 
 # test
@@ -44,6 +45,7 @@ gene2tr_file <- argv$gene2tr
 outdir <- argv$out_dir
 qvalue <- argv$qvalue
 logfc <- argv$logfc
+dispersion <- argv$dispersion
 
 dir.create(outdir, showWarnings = FALSE)
 samples <- read.delim(sample_inf, stringsAsFactors = F, header = F)
@@ -74,9 +76,15 @@ o <- log(calcNormFactors(each_pair_cts/normMat)) + log(colSums(each_pair_cts/nor
 conditions = factor(c(rep(each_pair[1], length(con1_sample)), rep(each_pair[2], length(con2_sample))))
 y <- DGEList(each_pair_cts, group=conditions)
 y$offset <- t(t(log(normMat)) + o)
-y <- estimateDisp(y)
+
 ## diff
-et <- exactTest(y, pair=rev(each_pair))
+if (length(con1_sample) > 1 && length(con2_sample) > 1) {
+  y <- estimateDisp(y)
+  et <- exactTest(y, pair=rev(each_pair))
+} else {
+  et <- exactTest(y, pair=rev(each_pair), dispersion=dispersion)
+}
+
 tTags <- topTags(et,n=NULL)
 new_tTags <- tTags$table
 new_tTags <- new_tTags[, !(names(new_tTags) %in% c("logCPM"))]
