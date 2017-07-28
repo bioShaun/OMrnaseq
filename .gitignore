@@ -108,3 +108,6 @@ ENV/
 
 #kegg pathway database
 rnaseq/modules/enrichment/kegg_pathway
+
+# emacs tmp
+*#

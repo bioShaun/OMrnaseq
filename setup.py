@@ -19,14 +19,17 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     scripts=['scripts/mrna',
-             'scripts/mrna_fastqc'],
+             'scripts/_module_summary'],
     install_requires=[
         'luigi',
         'pyyaml',
         'envoy',
         'xlsxwriter',
         'pandas',
-        'rpy2'],
+        'rpy2',
+        'packaging',
+        'docopt',
+        'HTSeq'],
 )
 
 print '''------------------------------

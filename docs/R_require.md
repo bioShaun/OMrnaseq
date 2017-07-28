@@ -1,0 +1,10 @@
+argparser
+tximport
+readr
+edgeR
+xlsx
+tibble
+rhdf5
+yarrr
+kimisc
+ggthemr
