@@ -10,6 +10,18 @@
 #################################################################
 
 ########################################
+# module names                         #
+########################################
+
+module_name:
+  test:
+  fastqc:
+    - 'run_fastqc'
+    - 'fastqc_summary'
+    - 'gc_plot'
+    - 'reads_quality_plot'
+
+########################################
 # config directory of each module      #
 ########################################
 module_dir:
@@ -69,19 +81,6 @@ module_software:
   kallisto: 'kallisto'
   stringtie: 'stringtie'
   gffread: 'gffread'
-
-
-##############################################
-# config command parameters for each module  #
-##############################################
-
-module_para:
-  assembly:
-    without_gtf: '{t.bam} -p {t._thread} -o {t.output}'
-    with_gtf: '-G '
-
-
-
 
 ########################################
 # config command line for each module  #
@@ -243,6 +242,22 @@ module_cmd:
                {t.proj_dir}/{t.main_dir}
                {t.proj_dir}/{t.result_dir}'
 
+#################################################
+# files ignore in results and needed in report  #
+#################################################
+
+pipe_cmd: '_module_summary pipe_all
+           --proj-dir {t.proj_dir}
+           --sample-inf {t.sample_inf}
+           --clean-dir {t.fq_dir}
+           --run-modules {t.module}
+           --species {t.latin_name}
+           --database {t.database}
+           --workers {t.workers}
+           --database-version {t.database_version}
+           --kegg-bg {t.kegg_bg}           '
+
+
 
 #################################################
 # files ignore in results and needed in report  #
@@ -327,10 +342,12 @@ file_suffix:
   assembly:
     merge_gtf: 'merged.gtf'
     merge_fa: 'merged.fa'
+    gene_tr_map: 'gene_trans.map'
 
 
 #################################################
 # databases                                     #
 #################################################
 database:
+  genome: '/public/database/genome/'
   kegg_pathway: ''
