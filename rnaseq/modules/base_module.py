@@ -6,6 +6,8 @@ from rnaseq.utils import config
 import envoy
 from rnaseq.utils.util_functions import rsync_pattern_to_file
 from rnaseq.utils.util_functions import write_obj_to_file
+from rnaseq.utils.util_functions import purge
+import sys
 
 
 class prepare(luigi.Task):
@@ -75,6 +77,51 @@ class simple_task_test(simple_task):
         with self.output().open('w') as simple_task_log:
             # simple_task_log.write(_process.std_out)
             simple_task_log.write(_run_cmd)
+
+
+# class ReRunTask(ForceableTask):
+#
+#     _module = 'test'
+#     proj_dir = luigi.Parameter()
+#     re_launch = luigi.Parameter(default='')
+#
+#     def rm_logs(self, rm_list):
+#         for each_file in rm_list:
+#             purge(each_file)
+#
+#     def run(self):
+#         print 'hh' * 20
+#         # if not self.re_launch:
+#         #     return 0
+#         # module_name_list = config.module_name[self._module]
+#         # remove_log_list = ['{t.proj_dir}/.ignore'.format(t=self)]
+#         #
+#         # if self.re_launch == 'check':
+#         #     self.rm_logs(remove_log_list)
+#         #     return 1
+#         # elif self.re_launch == 'all':
+#         #     module_index = 0
+#         # elif self.re_launch not in module_name_list:
+#         #     print 'wrong re-run value.'
+#         #     print 're-run values: check, all, {modules}.'.format(
+#         #         modules=', '.join(module_name_list)
+#         #     )
+#         #     sys.exit(1)
+#         # else:
+#         #     module_index = module_name_list.index(self.re_launch)
+#         # re_run_modules = module_name_list[module_index:]
+#         # remove_log_list.extend(['{t.proj_dir}/{log}/{name}.*log'.format(
+#         #     t=self, log=config.module_dir[self._module]['logs'], name=name
+#         # ) for name in re_run_modules])
+#         # self.rm_logs(remove_log_list)
+#
+#     #     with self.output().open('w') as re_run_inf:
+#     #         re_run_inf.write('re-run [{t.re_launch}]'.format(t=self))
+#     #
+#     def output(self):
+#         return luigi.LocalTarget('{t.proj_dir}/{log_dir}/re_run.log'.format(
+#             t=self, log_dir=config.module_dir[self._module]['logs']
+#         ))
 
 
 class collection_task(luigi.Task):

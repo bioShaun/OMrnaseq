@@ -114,15 +114,13 @@ class run_enrich_barplot(simple_task):
 class enrich_collection(collection_task):
 
     _module = MODULE
-    sample_inf = luigi.Parameter()
+    diff_dir = config.module_dir['quant']['diff']
 
     def requires(self):
-        group_sample_df = pd.read_table(
-            self.sample_inf, header=None, index_col=0)
-        compare_list = itertools.combinations(
-            group_sample_df.index.unique(), 2)
-        compare_name_list = ['{0}_vs_{1}'.format(
-            each_compare[0], each_compare[1]) for each_compare in compare_list]
+        diff_dir = os.path.join(
+            self.proj_dir, self.diff_dir
+        )
+        compare_name_list = os.listdir(diff_dir)
         return [run_enrich_barplot(proj_dir=self.proj_dir, go=self.go,
                                    topgo=self.topgo, kegg_bg=self.kegg_bg,
                                    gene_length=self.gene_length,

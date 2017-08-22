@@ -4,6 +4,7 @@ import os
 import luigi
 from luigi.util import requires, inherits
 from rnaseq.utils import config
+from rnaseq.utils import database
 from rnaseq.modules.fastqc import fastqc
 from rnaseq.modules.quantification import quant
 from rnaseq.modules.enrichment import enrich
@@ -37,6 +38,53 @@ class pipe_enrich(cp_analysis_result):
     _module = MODULE
     main_dir = config.module_dir['enrich']['main']
     result_dir = config.module_dir['result']['result']
+
+
+@requires(pipe_prepare)
+class pipe_all(simple_task):
+    _module = MODULE
+    run_modules = luigi.Parameter()
+    species = luigi.Parameter()
+    database = luigi.Parameter()
+    database_version = luigi.Parameter()
+    kegg_bg = luigi.Parameter()
+    sample_inf = luigi.Parameter()
+    clean_dir = luigi.Parameter()
+
+    # run fastqc
+    def run(self):
+        my_sp_inf = database.sepcies_annotation_path(self.database,
+                                                     self.species,
+                                                     self.database_version)
+        my_sp_inf.get_anno_inf()
+        run_module_list = self.run_modules.split(',')
+        if 'fastqc' in run_module_list or 'pipe' in run_module_list:
+            yield pipe_fastqc(clean_dir=self.clean_dir,
+                              sample_inf=self.sample_inf,
+                              proj_dir=self.proj_dir)
+
+        if 'quant' in run_module_list or 'enrich' in run_module_list or 'pipe' in run_module_list:
+            yield pipe_quant(clean_dir=self.clean_dir,
+                             sample_inf=self.sample_inf,
+                             proj_dir=self.proj_dir,
+                             tr_index=my_sp_inf.transcript_index,
+                             gene2tr=my_sp_inf.gene_tr)
+
+        if 'enrich' in run_module_list or 'pipe' in run_module_list:
+            if self.kegg_bg == 'none':
+                self.kegg_bg = my_sp_inf.kegg_abbr
+            yield pipe_enrich(proj_dir=self.proj_dir,
+                              go=my_sp_inf.goseq_ano,
+                              topgo=my_sp_inf.topgo_ano,
+                              gene_length=my_sp_inf.gene_len,
+                              kegg=my_sp_inf.kegg_blast,
+                              sp=my_sp_inf.kegg_abbr,
+                              kegg_bg=self.kegg_bg)
+
+        with self.output().open('w') as log_inf:
+            log_inf.write('finished {m}'.format(
+                m=self.run_modules
+            ))
 
 
 if __name__ == '__main__':
