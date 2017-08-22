@@ -1,10 +1,9 @@
 #!/usr/bin/env python
+
 import click
-from click_default_group import DefaultGroup
 import os
-import envoy
-import subprocess
-import functools
+from rnaseq.utils import config
+from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
 
 
 CURRENT_DIR = os.getcwd()
@@ -12,112 +11,74 @@ DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
 DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
 
 
-def quant_params(func):
-    @click.option('-tr', '--tr_index', type=click.Path(exists=True),
-                  help='kallisto index of transcript fasta')
-    @click.option('-gr', '--gene2tr', type=click.Path(exists=True),
-                  help='gene transcript map file.')
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
-    return wrapper
+class RunPipe(object):
+
+    def __init__(self, proj_dir, sample_inf, fq_dir, workers, latin_name,
+                 kegg_bg, database, database_version, module, re_run=None):
+        self.proj_dir = proj_dir
+        self.sample_inf = sample_inf
+        self.fq_dir = fq_dir
+        self.workers = workers
+        self.latin_name = latin_name
+        self.database = database
+        self.database_version = database_version
+        self.kegg_bg = kegg_bg
+        self.module = module
+        self.re_run = re_run
+
+    @property
+    def clean(self):
+        clean_logs(self.proj_dir, self.module, self.re_run)
+
+    @property
+    def run(self):
+        pipe_cmd = config.pipe_cmd.format(t=self)
+        nohuprun_cmd(pipe_cmd)
 
 
-@click.group(chain=True, invoke_without_command=True,
-             cls=DefaultGroup, default='pipe', default_if_no_args=True)
+@click.command()
 @click.option('-p', '--proj_dir',
               type=click.Path(exists=True), default=CURRENT_DIR,
               help='project analysis directory, default is current dir.')
 @click.option('-s', '--sample_inf',
               type=click.Path(exists=True), default=DEFAULT_SAMPLE_INI,
-              help='group vs sample file, \
-              default is "sample.ini" in current dir.')
-@click.option('-fq', '--fq_dir',
+              help='group vs sample file, default is "sample.ini"\
+              in current directory.')
+@click.option('-f', '--fq_dir',
               type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
               help='directory place analysis fq files, \
               default is "cleandata" in current dir.')
 @click.option('-w', '--workers',
-              type=int, help='paralle number.')
-@click.pass_context
-def main(ctx, proj_dir, sample_inf, fq_dir, workers):
-    ctx.obj['PROJ_DIR'] = proj_dir
-    ctx.obj['SAMPLE_INF'] = sample_inf
-    ctx.obj['FQ_DIR'] = fq_dir
-    ctx.obj['WORKERS'] = workers
-
-
-@main.command('fastqc')
-@click.pass_context
-def fastqc(ctx):
-    fastqc_cmd = '_module_summary pipe_fastqc \
-                  --proj-dir {proj_dir} --sample-inf {sample} \
-                  --clean-dir {fq_dir} --workers {workers}'.format(
-        proj_dir=ctx.obj['PROJ_DIR'], sample=ctx.obj['SAMPLE_INF'],
-        fq_dir=ctx.obj['FQ_DIR'], workers=ctx.obj['WORKERS']
-    )
-    fastqc_cmd_list = envoy.expand_args(fastqc_cmd)[0]
-    subprocess.Popen(fastqc_cmd_list, shell=False)
-    return 'run fastqc!'
-
-
-@main.command('quant')
-@quant_params
-@click.pass_context
-def quant(ctx, tr_index, gene2tr):
-    ctx.obj['TR_INDEX'] = tr_index
-    ctx.obj['GENE2TR'] = gene2tr
-    quant_cmd = '_module_summary pipe_quant \
-                --proj-dir {proj_dir} --sample-inf {sample} \
-                --clean-dir {fq_dir} --workers {workers} \
-                --tr-index {tr_index} --gene2tr {gene2tr}'.format(
-        proj_dir=ctx.obj['PROJ_DIR'], sample=ctx.obj['SAMPLE_INF'],
-        fq_dir=ctx.obj['FQ_DIR'], workers=ctx.obj['WORKERS'],
-        tr_index=ctx.obj['TR_INDEX'], gene2tr=ctx.obj['GENE2TR']
-    )
-    quant_cmd_list = envoy.expand_args(quant_cmd)[0]
-    subprocess.Popen(quant_cmd_list, shell=False)
-    return 'run quant!'
-
-
-@main.command('enrich')
-@click.option('-go', '--go_ann', type=click.Path(exists=True),
-              help='Two column go annotation, seprated with ",".')
-@click.option('-topgo', '--top_go_ann', type=click.Path(exists=True),
-              help='topGO annotation.')
-@click.option('-gl', '--gene_length', type=click.Path(exists=True),
-              help='Two column gene length annotation, seperated with ",".')
-@click.option('-sp', '--species', type=str,
-              help='species kegg three letters abbr.')
-@click.option('-bg', '--kegg_bg', type=str, default="",
-              help='KEGG analysis background.')
-@click.option('-kegg', '--kegg_ann', type=click.Path(exists=True),
-              help='blast result of spcies cds/pep with KEGG species pep.')
-@click.pass_context
-def enrich(ctx, go_ann, top_go_ann,
-           gene_length, species, kegg_bg, kegg_ann):
-    ctx.obj['GO_ANN'] = go_ann
-    ctx.obj['TOP_GO_ANN'] = top_go_ann
-    ctx.obj['GENE_LENGTH'] = gene_length
-    ctx.obj['SPECIES'] = species
-    ctx.obj['KEGG_BG'] = kegg_bg
-    ctx.obj['KEGG_ANN'] = kegg_ann
-    enrich_cmd = '_module_summary pipe_enrich \
-                --proj-dir {proj_dir} --sample-inf {sample} \
-                --workers {workers} \
-                --go {go} --topgo {topgo} \
-                --gene-length {gl} --kegg {kegg} \
-                --sp {sp} --kegg-bg {kegg_bg} \
-                '.format(
-        proj_dir=ctx.obj['PROJ_DIR'], sample=ctx.obj['SAMPLE_INF'],
-        workers=ctx.obj['WORKERS'],
-        go=ctx.obj['GO_ANN'], topgo=ctx.obj['TOP_GO_ANN'],
-        gl=ctx.obj['GENE_LENGTH'], kegg=ctx.obj['KEGG_ANN'],
-        sp=ctx.obj['SPECIES'], kegg_bg=ctx.obj['KEGG_BG']
-    )
-    enrich_cmd_list = envoy.expand_args(enrich_cmd)[0]
-    subprocess.Popen(enrich_cmd_list, shell=False)
-    return 'run quant!'
+              type=int, help='paralle number.', default=1)
+@click.option('-l', '--latin_name', type=str,
+              help='species latin name.')
+@click.option('-k', '--kegg_bg', default='none',
+              help='kegg analysis backgroud, default is the \
+              analysis species, if using KO database for \
+              kegg enrichment annotation, the parameter is required.')
+@click.option('-d', '--database', default='ensembl',
+              help='species database.')
+@click.option('-dv', '--database_version', default='current',
+              help='species database version.')
+@click.option('-m', '--module', type=str, default='pipe',
+              help='modules to run, seperated with ",", \
+              default is the whole pipeline.')
+@click.option('-r', '--re_run', type=str, default='',
+              help='re-run parts of modules, seperated with ",".')
+def main(proj_dir, sample_inf, fq_dir, database, database_version,
+         workers, latin_name, module, re_run, kegg_bg):
+    my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
+                      kegg_bg, database, database_version, module, re_run)
+    modules = module.split(',')
+    re_run_parts = re_run.split(',')
+    for each_module in modules:
+        my_pipe.module = each_module
+        for each_re_run in re_run_parts:
+            my_pipe.re_run = each_re_run
+            my_pipe.clean
+    my_pipe.module = module
+    my_pipe.run
 
 
 if __name__ == '__main__':
-    main(obj=dict())
+    main()

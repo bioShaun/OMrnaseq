@@ -77,7 +77,6 @@ class reads_quality_plot(simple_task):
 @requires(reads_quality_plot)
 class fastqc_collection(collection_task):
     _module = MODULE
-    pass
 
 
 if __name__ == '__main__':
