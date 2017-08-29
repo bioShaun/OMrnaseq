@@ -2,17 +2,29 @@
 
 import os
 import luigi
-from luigi.util import requires, inherits
+from luigi.util import requires
 from rnaseq.utils import config
 from rnaseq.utils import database
+from rnaseq.utils.util_functions import resize_report_plot, rename_result_dir
 from rnaseq.modules.fastqc import fastqc
 from rnaseq.modules.quantification import quant
+from rnaseq.modules.mapping import star_mapping
 from rnaseq.modules.enrichment import enrich
 from rnaseq.modules.base_module import prepare, simple_task, cp_analysis_result
+import sys
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 MODULE, _ = os.path.splitext(script_name)
+
+
+MODULE_DP = {
+    'pipe': ['fastqc', 'mapping', 'quant', 'enrich'],
+    'fastqc': ['fastqc'],
+    'quant': ['quant'],
+    'mapping': ['mapping'],
+    'enrich': ['quant', 'enrich'],
+}
 
 
 class pipe_prepare(prepare):
@@ -24,6 +36,15 @@ class pipe_fastqc(cp_analysis_result):
     _module = MODULE
     main_dir = config.module_dir['fastqc']['main']
     result_dir = config.module_dir['result']['result']
+    report_data = config.module_dir['result']['report_data']
+
+
+@requires(star_mapping.star_mapping_collection)
+class pipe_mapping(cp_analysis_result):
+    _module = MODULE
+    main_dir = config.module_dir['star_mapping']['main']
+    result_dir = config.module_dir['result']['result']
+    report_data = config.module_dir['result']['report_data']
 
 
 @requires(quant.quant_collection)
@@ -31,6 +52,7 @@ class pipe_quant(cp_analysis_result):
     _module = MODULE
     main_dir = config.module_dir['quant']['main']
     result_dir = config.module_dir['result']['result']
+    report_data = config.module_dir['result']['report_data']
 
 
 @requires(enrich.enrich_collection)
@@ -38,6 +60,25 @@ class pipe_enrich(cp_analysis_result):
     _module = MODULE
     main_dir = config.module_dir['enrich']['main']
     result_dir = config.module_dir['result']['result']
+    report_data = config.module_dir['result']['report_data']
+
+
+@requires(pipe_prepare)
+class pipe_report(simple_task):
+    _module = MODULE
+    result_main_dir = config.module_dir['result']['main']
+    report_data = config.module_dir['result']['report_data']
+    sample_inf = luigi.Parameter()
+    species = luigi.Parameter()
+
+    def treat_parameter(self):
+        report_data = os.path.join(self.proj_dir, self.report_data)
+        resize_report_plot(report_data)
+        # rename result directory
+        result_dir = rename_result_dir(
+            self.proj_dir, self.sample_inf, self.species)
+        # generate report
+        # to be done
 
 
 @requires(pipe_prepare)
@@ -51,26 +92,41 @@ class pipe_all(simple_task):
     sample_inf = luigi.Parameter()
     clean_dir = luigi.Parameter()
 
-    # run fastqc
+    def get_module_list(self):
+        run_module_list = self.run_modules.split(',')
+        all_modules_need_run = []
+        for each_module in run_module_list:
+            if each_module in MODULE_DP:
+                all_modules_need_run.extend(MODULE_DP[each_module])
+            else:
+                sys.exit('module [{m}] not available'.format(m=each_module))
+        return list(set(all_modules_need_run))
+
     def run(self):
         my_sp_inf = database.sepcies_annotation_path(self.database,
                                                      self.species,
                                                      self.database_version)
         my_sp_inf.get_anno_inf()
-        run_module_list = self.run_modules.split(',')
-        if 'fastqc' in run_module_list or 'pipe' in run_module_list:
+        run_module_list = self.get_module_list()
+        if 'fastqc' in run_module_list:
             yield pipe_fastqc(clean_dir=self.clean_dir,
                               sample_inf=self.sample_inf,
                               proj_dir=self.proj_dir)
 
-        if 'quant' in run_module_list or 'enrich' in run_module_list or 'pipe' in run_module_list:
+        if 'mapping' in run_module_list:
+            yield pipe_mapping(clean_dir=self.clean_dir,
+                               sample_inf=self.sample_inf,
+                               proj_dir=self.proj_dir,
+                               star_index=my_sp_inf.star_index)
+
+        if 'quant' in run_module_list:
             yield pipe_quant(clean_dir=self.clean_dir,
                              sample_inf=self.sample_inf,
                              proj_dir=self.proj_dir,
                              tr_index=my_sp_inf.transcript_index,
                              gene2tr=my_sp_inf.gene_tr)
 
-        if 'enrich' in run_module_list or 'pipe' in run_module_list:
+        if 'enrich' in run_module_list:
             if self.kegg_bg == 'none':
                 self.kegg_bg = my_sp_inf.kegg_abbr
             yield pipe_enrich(proj_dir=self.proj_dir,
@@ -80,6 +136,11 @@ class pipe_all(simple_task):
                               kegg=my_sp_inf.kegg_blast,
                               sp=my_sp_inf.kegg_abbr,
                               kegg_bg=self.kegg_bg)
+
+        if self.run_modules == 'pipe':
+            yield pipe_report(proj_dir=self.proj_dir,
+                              sample_inf=self.sample_inf,
+                              species=self.species)
 
         with self.output().open('w') as log_inf:
             log_inf.write('finished {m}'.format(

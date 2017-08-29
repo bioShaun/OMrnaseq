@@ -29,7 +29,9 @@ setup(
         'rpy2',
         'packaging',
         'docopt',
-        'HTSeq'],
+        'HTSeq',
+        'click',
+        'Pillow'],
 )
 
 print '''------------------------------

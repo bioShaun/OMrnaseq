@@ -4,11 +4,14 @@ import click
 import os
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
+from rnaseq.utils.util_functions import MutuallyExclusiveOption
 
 
 CURRENT_DIR = os.getcwd()
 DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
 DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
+DEFAULT_WORKER = ""
+DEFAULT_SP = ""
 
 
 class RunPipe(object):
@@ -28,7 +31,18 @@ class RunPipe(object):
 
     @property
     def clean(self):
-        clean_logs(self.proj_dir, self.module, self.re_run)
+        re_run_list = []
+        if self.re_run:
+            re_run_modules = self.re_run.split(',')
+            for each_re_run in re_run_modules:
+                each_module = each_re_run.split(':')[0]
+                try:
+                    each_task = each_re_run.split(':')[1]
+                except IndexError:
+                    each_task = 'all'
+                clean_logs(self.proj_dir, each_module, each_task)
+                re_run_list.append(each_module)
+            self.module = ','.join(re_run_list)
 
     @property
     def run(self):
@@ -48,9 +62,9 @@ class RunPipe(object):
               type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
               help='directory place analysis fq files, \
               default is "cleandata" in current dir.')
-@click.option('-w', '--workers',
-              type=int, help='paralle number.', default=1)
-@click.option('-l', '--latin_name', type=str,
+@click.option('-w', '--workers', default=DEFAULT_WORKER,
+              type=int, help='paralle number.')
+@click.option('-l', '--latin_name', type=str, default=DEFAULT_SP,
               help='species latin name.')
 @click.option('-k', '--kegg_bg', default='none',
               help='kegg analysis backgroud, default is the \
@@ -61,22 +75,19 @@ class RunPipe(object):
 @click.option('-dv', '--database_version', default='current',
               help='species database version.')
 @click.option('-m', '--module', type=str, default='pipe',
+              cls=MutuallyExclusiveOption, mutually_exclusive=["re_run"],
               help='modules to run, seperated with ",", \
               default is the whole pipeline.')
 @click.option('-r', '--re_run', type=str, default='',
+              cls=MutuallyExclusiveOption, mutually_exclusive=["module"],
               help='re-run parts of modules, seperated with ",".')
 def main(proj_dir, sample_inf, fq_dir, database, database_version,
          workers, latin_name, module, re_run, kegg_bg):
     my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
                       kegg_bg, database, database_version, module, re_run)
-    modules = module.split(',')
-    re_run_parts = re_run.split(',')
-    for each_module in modules:
-        my_pipe.module = each_module
-        for each_re_run in re_run_parts:
-            my_pipe.re_run = each_re_run
-            my_pipe.clean
     my_pipe.module = module
+    my_pipe.re_run = re_run
+    my_pipe.clean
     my_pipe.run
 
 

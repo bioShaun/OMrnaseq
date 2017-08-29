@@ -4,11 +4,10 @@ import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
+from rnaseq.utils.util_functions import get_enrichment_data
 from rnaseq.modules.base_module import prepare, simple_task
 from rnaseq.modules.base_module import collection_task
-import pandas as pd
 import inspect
-import itertools
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
@@ -115,6 +114,11 @@ class enrich_collection(collection_task):
 
     _module = MODULE
     diff_dir = config.module_dir['quant']['diff']
+    enrich_dir = config.module_dir[MODULE]['main']
+
+    def run_prepare(self):
+        enrich_dir = os.path.join(self.proj_dir, self.enrich_dir)
+        get_enrichment_data(enrich_dir)
 
     def requires(self):
         diff_dir = os.path.join(
