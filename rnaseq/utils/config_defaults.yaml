@@ -20,6 +20,21 @@ module_name:
     - 'fastqc_summary'
     - 'gc_plot'
     - 'reads_quality_plot'
+  star_mapping:
+    - 'run_star'
+    - 'get_bam_file'
+    - 'star_mapping_summary'
+  quant:
+    - 'run_kallisto'
+    - 'kallisto_to_matrix'
+    - 'run_diff'
+    - 'get_excel_table'
+    - 'quant_report_data'
+  enrich:
+    - 'run_goseq'
+    - 'run_kobas'
+    - 'run_pathway'
+    - 'run_enrich_barplot'
 
 ########################################
 # config directory of each module      #
@@ -62,10 +77,12 @@ module_dir:
     logs: 'logs'
     result: 'result/analysis_result'
     report: 'result/analysis_report'
+    report_data: 'result/analysis_report/report_data'
   result:
     main: 'result'
     result: 'result/analysis_result'
     report: 'result/analysis_report'
+    report_data: 'result/analysis_report/report_data'
   qc:
     main: 'qc'
     logs: 'qc/logs'
@@ -81,12 +98,14 @@ module_software:
   kallisto: 'kallisto'
   stringtie: 'stringtie'
   gffread: 'gffread'
+  trimmomatic: '/public/software/Trimmomatic/Trimmomatic-0.36/trimmomatic-0.36.jar'
 
 ########################################
 # config command line for each module  #
 ########################################
 module_cmd:
   fastqc:
+    run_trimmomatic: ''
     run_fastqc: '{t.fastqc_bin}
                  {t.clean_dir}/{t.sample}_1.{t.fq_suffix} {t.clean_dir}/{t.sample}_2.{t.fq_suffix}
                  --extract
@@ -235,12 +254,19 @@ module_cmd:
                          --table {t.proj_dir}/{t.kegg_dir}/{t.compare}/
                          --diff {t.proj_dir}/{t.diff_dir}/{t.compare}/
                          --type kegg'
+  _module_summary:
+    pipe_report: 'echo "prepare report"'
   cp_results: 'rsync
                -av
                --copy-links
                --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
                {t.proj_dir}/{t.main_dir}
-               {t.proj_dir}/{t.result_dir}'
+               {t.proj_dir}/{t.result_dir} |
+               rsync
+               -av
+               --files-from={t.proj_dir}/{t.main_dir}/.report_files
+               {t.proj_dir}/{t.main_dir}
+               {t.proj_dir}/{t.report_data}/{t.main_dir}'
 
 #################################################
 # files ignore in results and needed in report  #
@@ -255,7 +281,7 @@ pipe_cmd: '_module_summary pipe_all
            --database {t.database}
            --workers {t.workers}
            --database-version {t.database_version}
-           --kegg-bg {t.kegg_bg}           '
+           --kegg-bg {t.kegg_bg}'
 
 
 
@@ -323,6 +349,14 @@ module_file:
       - 'go/*/DAG/ALL*png'
       - 'go/*/*.ALL.go.enrichment.txt'
       - 'kegg/*/*ALL.kegg.enrichment.txt'
+      - 'report.go.table.txt'
+      - 'report.kegg.table.txt'
+      - 'CC.GO.DAG.png'
+      - 'MF.GO.DAG.png'
+      - 'BP.GO.DAG.png'
+      - 'go.enrichment.barplot.png'
+      - 'kegg.enrichment.barplot.png'
+      - 'kegg.pathview.png'
   quick_enrich:
     ignore_files:
       - '.ignore'
@@ -343,6 +377,41 @@ file_suffix:
     merge_gtf: 'merged.gtf'
     merge_fa: 'merged.fa'
     gene_tr_map: 'gene_trans.map'
+
+
+#################################################
+# report pictures                               #
+#################################################
+
+report_picture:
+  path:
+    reads_quality_plot: 'fastqc/reads_quality_plot/reads_quality.bar.png'
+    gc_plot: 'fastqc/gc_plot/gc_distribution.line.png'
+    mapping_plot: 'mapping/mapping_stats_plot.png'
+    inner_dis_plot: 'rseqc/inner_distance/inner_distance.bar.png'
+    genebody_cov_plot: 'rseqc/genebody_coverage/genebody_coverage.point.png'
+    reads_dis_plot: 'rseqc/read_distribution/read_distribution.bar.png'
+    sample_cor_plot: 'quantification/expression_summary/Sample.correlation.heatmap.png'
+    exp_dis_plot: 'quantification/expression_summary/Gene_expression.png'
+    volcano_plot: 'quantification/expression_summary/ALL.Volcano_plot.png'
+    diff_heatmap: 'quantification/expression_summary/Diff.genes.heatmap.png'
+    diff_cluster: 'quantification/expression_summary/Diff.genes.cluster.png'
+    go_bar_plot: 'enrichment/go.enrichment.barplot.png'
+    kegg_bar_plot: 'enrichment/kegg.enrichment.barplot.png'
+  size:
+    reads_quality_plot: '3000,2500'
+    gc_plot: '3000,2500'
+    mapping_plot: '2280,2040'
+    inner_dis_plot: '3600,3000'
+    genebody_cov_plot: '3000,2100'
+    reads_dis_plot: '2760,2720'
+    sample_cor_plot: '2760,2460'
+    exp_dis_plot: '1920,3000'
+    volcano_plot: '2600,3000'
+    diff_heatmap: '2000,2400'
+    diff_cluster: '2000,2400'
+    go_bar_plot: '2325,1890'
+    kegg_bar_plot: '2325,1890'
 
 
 #################################################

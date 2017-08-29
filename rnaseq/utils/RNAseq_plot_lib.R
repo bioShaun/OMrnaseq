@@ -14,10 +14,6 @@ suppressMessages(library(yarrr, quietly = T))
 suppressMessages(library(gplots))
 options(bitmapType = "cairo")
 
-# source('/public/scripts/RNAseq/R/quantification/quant_plot.R')
-# source('C:\\work\\scripts\\atom\\R\\quantification\\quant_plot.R')
-# theme
-
 theme_Publication <- function(base_size = 14, base_family = "helvetica") {
   suppressMessages(require("grid", quietly = T))
   suppressMessages(require("ggthemes", quietly = T))
