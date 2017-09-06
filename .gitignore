@@ -111,3 +111,6 @@ rnaseq/modules/enrichment/kegg_pathway
 
 # emacs tmp
 *#
+
+# database yaml file
+database.yaml
