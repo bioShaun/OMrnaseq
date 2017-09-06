@@ -235,3 +235,24 @@ def rename_result_dir(proj_dir, sample_inf, species):
     new_result_dir = os.path.join(proj_dir, result_name)
     os.rename(old_result_dir, new_result_dir)
     return new_result_dir
+
+
+def pipe_default_para(proj_dir, max_worker=8):
+    proj_dir_name = os.path.basename(proj_dir)
+    proj_name_list = proj_dir_name.split('-')
+    try:
+        sample_num = proj_name_list[1]
+    except IndexError:
+        sample_num = None
+    else:
+        try:
+            sample_num = int(sample_num)
+        except ValueError:
+            sample_num = None
+    try:
+        species = proj_name_list[2]
+    except IndexError:
+        species = None
+    if sample_num and sample_num > max_worker:
+        sample_num = max_worker
+    return sample_num, species
