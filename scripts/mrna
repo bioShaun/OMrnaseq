@@ -2,16 +2,17 @@
 
 import click
 import os
+import sys
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
 from rnaseq.utils.util_functions import MutuallyExclusiveOption
+from rnaseq.utils.util_functions import pipe_default_para
 
 
 CURRENT_DIR = os.getcwd()
 DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
 DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
-DEFAULT_WORKER = ""
-DEFAULT_SP = ""
+DEFAULT_WORKER, DEFAULT_SP = pipe_default_para(CURRENT_DIR)
 
 
 class RunPipe(object):
@@ -83,6 +84,11 @@ class RunPipe(object):
               help='re-run parts of modules, seperated with ",".')
 def main(proj_dir, sample_inf, fq_dir, database, database_version,
          workers, latin_name, module, re_run, kegg_bg):
+    if not workers:
+        sys.exit('worker number must be specified!')
+    else:
+        if not latin_name:
+            sys.exit('species latin name must be specified!')
     my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
                       kegg_bg, database, database_version, module, re_run)
     my_pipe.module = module
