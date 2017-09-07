@@ -103,7 +103,7 @@ class sepcies_annotation_path(object):
         self.kingdom = my_sp_inf.kingdom
         sp_database_dir = os.path.join(database_dir, self.sp_database,
                                        self.kingdom, self.sp_latin,
-                                       self.sp_db_version)
+                                       'annotation', self.sp_db_version)
         return sp_database_dir
 
     def get_anno_inf(self):
