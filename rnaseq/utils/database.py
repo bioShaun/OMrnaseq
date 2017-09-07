@@ -2,7 +2,7 @@ import yaml
 import os
 from . import config
 import sys
-import glob
+from omdatabase import species
 
 
 SPECIES_KINGDOM = ('animal', 'plant')
@@ -55,6 +55,7 @@ class sepcies_annotation_path(object):
         self.sp_latin = sp_latin
         self.sp_database = sp_database
         self.sp_db_version = sp_db_version
+        self.kingdom = None
         self.kegg_abbr = None
         self.genome_fa = None
         self.gtf = None
@@ -67,6 +68,7 @@ class sepcies_annotation_path(object):
         self.gene_len = None
         self.kegg_blast = None
         self.transcript_index = None
+        self.exists = True
 
     def check_database(self):
         database_inf_dict = load_database_inf()
@@ -80,24 +82,28 @@ class sepcies_annotation_path(object):
                 sys.exit('Species latin name is required.')
             else:
                 if self.sp_latin not in database_inf_dict[self.sp_database]:
-                    sys.exit('Species [{n}] not found in \
-                              database directory [{p}].'.format(
-                        n=self.sp_latin, p=database_dir
-                    ))
+                    # sys.exit('Species [{n}] not found in \
+                    #           database directory [{p}].'.format(
+                    #     n=self.sp_latin, p=database_dir
+                    # ))
+                    self.exists = False
                 else:
                     if not self.sp_db_version:
                         self.sp_db_version = 'current'
                     else:
                         vs = database_inf_dict[self.sp_database][self.sp_latin]
                         if self.sp_db_version not in vs:
-                            sys.exit('Database version {n} not in \
-                                      database directory [{p}].'.format(
-                                n=self.sp_db_version, p=database_dir
-                            ))
-        sp_database_dir = glob.glob(
-            '{b}/{d}/*/{s}/annotation/{v}'.format(
-                b=database_dir, d=self.sp_database,
-                s=self.sp_latin, v=self.sp_db_version))[0]
+                            # sys.exit('Database version {n} not in \
+                            #           database directory [{p}].'.format(
+                            #     n=self.sp_db_version, p=database_dir
+                            # ))
+                            self.exists = False
+        _species = ' '.join(self.sp_latin.split('_'))
+        my_sp_inf = species.Species(_species)
+        self.kingdom = my_sp_inf.kingdom
+        sp_database_dir = os.path.join(database_dir, self.sp_database,
+                                       self.kingdom, self.sp_latin,
+                                       self.sp_db_version)
         return sp_database_dir
 
     def get_anno_inf(self):
