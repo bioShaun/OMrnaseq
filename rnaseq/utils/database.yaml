@@ -1,9 +1,0 @@
-JGI:
-  citrus_sinensis: [v1.0, current]
-ensembl:
-  arabidopsis_thaliana: [current, release-29]
-  gallus_gallus: [release-88, current, release-87]
-  homo_sapiens: [release-89, current]
-  sorghum_bicolor: [release-35]
-  sus_scrofa: [release-84, current]
-  triticum_aestivum: [v1.0, current]
