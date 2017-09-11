@@ -106,6 +106,8 @@ class pipe_all(simple_task):
         my_sp_inf = database.sepcies_annotation_path(self.database,
                                                      self.species,
                                                      self.database_version)
+        if not my_sp_inf.exists:
+            sys.exit('database not exists.')
         my_sp_inf.get_anno_inf()
         run_module_list = self.get_module_list()
         if 'fastqc' in run_module_list:
