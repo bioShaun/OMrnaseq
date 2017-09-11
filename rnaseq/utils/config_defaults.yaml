@@ -255,7 +255,10 @@ module_cmd:
                          --diff {t.proj_dir}/{t.diff_dir}/{t.compare}/
                          --type kegg'
   _module_summary:
-    pipe_report: 'echo "prepare report"'
+    pipe_report: 'python {t.report_py}
+                  {t.result_dir}
+                  --pdf
+                  --part'
   cp_results: 'rsync
                -av
                --copy-links
