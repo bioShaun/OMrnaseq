@@ -17,7 +17,7 @@ p <- add_argument(p, "--logfc", help = "diff gene logfc cutoff", default = 1)
 argv <- parse_args(p)
 
 MERGED_VOL_PLOT_NUM = 6
-DIFF_HEATMAP_GENE = 40000
+DIFF_HEATMAP_GENE = 30000
 CUT_TREE_PER = 20
 MIN_CLUSTER_NUM = 10
 MIN_CLUSTER_POR = 0.005
