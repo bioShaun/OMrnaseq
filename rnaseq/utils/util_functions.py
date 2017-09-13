@@ -107,7 +107,7 @@ def write_obj_to_file(obj, fn, append=False):
     fh = open(fn, 'a' if append is True else 'w')
     if type(obj) is str:
         fh.write('%s\n' % obj)
-    elif type(obj) is list:
+    elif type(obj) is list or type(obj) is set:
         for item in obj:
             fh.write('%s\n' % item)
     elif type(obj) is dict:
@@ -256,3 +256,8 @@ def pipe_default_para(proj_dir, max_worker=8):
     if sample_num and sample_num > max_worker:
         sample_num = max_worker
     return sample_num, species
+
+
+def save_mkdir(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
