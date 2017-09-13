@@ -75,10 +75,8 @@ class pipe_report(simple_task):
         report_data = os.path.join(self.proj_dir, self.report_data)
         resize_report_plot(report_data)
         # rename result directory
-        result_dir = rename_result_dir(
+        self.result_dir = rename_result_dir(
             self.proj_dir, self.sample_inf, self.species)
-        # generate report
-        # to be done
 
 
 @requires(pipe_prepare)

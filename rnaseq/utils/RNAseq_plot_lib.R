@@ -501,7 +501,7 @@ cluster_plot <- function(plot_data, out_prefix) {
 
   cluster_number <- length(unique(plot_data$cluster))
   col_theme <- colorRampPalette(gg_flat_col)(cluster_number)
-  theme_cluster <- theme_onmath() + theme(axis.text.x = element_text(vjust = -0.2, size = rel(.8), angle = 90))
+  theme_cluster <- theme_onmath() + theme(axis.text.x = element_text(vjust = -0.2, size = rel(.6), angle = 90))
 
   cluster_plot <- ggplot(plot_data, aes(x=variable, y=value, group = Gene_id, color=cluster)) +
     geom_line(alpha = 0.2) +
