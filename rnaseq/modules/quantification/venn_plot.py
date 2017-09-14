@@ -8,6 +8,10 @@ from rnaseq.utils import config
 from rnaseq.utils import venn
 from rnaseq.utils.util_functions import save_mkdir
 from rnaseq.utils.util_functions import write_obj_to_file
+import itertools
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 
 def output_plot(fig, out_prefix):
@@ -16,16 +20,10 @@ def output_plot(fig, out_prefix):
     fig.savefig(png_file, dpi=300)
     fig.savefig(pdf_file)
     fig.clear()
+    plt.close(fig)
 
 
-@click.command()
-@click.option('-d', '--diff_dir', type=click.Path(exists=True), required=True,
-              help='differential analysis directory.')
-@click.option('-c', '--combination', type=click.STRING, required=True,
-              help='venn plot combination, 2 ~ 5 Sets, seperated with ",".')
-@click.option('-o', '--out_dir', type=click.Path(), required=True,
-              help='output directory.')
-def main(diff_dir, combination, out_dir):
+def plot_one_combination(diff_dir, combination, out_dir):
     combination_list = combination.split(',')
     comb_num = len(combination_list)
     # check combination number, only support 2-5 combination to draw venn
@@ -60,6 +58,29 @@ def main(diff_dir, combination, out_dir):
     for each_part in col_set:
         out_file = os.path.join(out_dir, '{n}.txt'.format(n=each_part))
         write_obj_to_file(col_set[each_part], out_file)
+
+
+@click.command()
+@click.option('-d', '--diff_dir', type=click.Path(exists=True), required=True,
+              help='differential analysis directory.')
+@click.option('-s', '--combination', type=click.STRING, required=True,
+              help='venn plot sets, limit is 2 ~ 5 Sets, seperated with ",".')
+@click.option('-o', '--out_dir', type=click.Path(), required=True,
+              help='output directory.')
+@click.option('-a', '--all', is_flag=True,
+              help='run all possible combination between 2-5 sets of sets \
+              provided.')
+def main(diff_dir, combination, out_dir, all):
+    if not all:
+        plot_one_combination(diff_dir, combination, out_dir)
+    else:
+        combination_list = combination.split(',')
+        max_num = min(6, len(combination_list)+1)
+        for each_num in range(2, max_num):
+            all_com = itertools.combinations(combination_list, each_num)
+            for each_com in all_com:
+                each_com_name = ','.join(each_com)
+                plot_one_combination(diff_dir, each_com_name, out_dir)
 
 
 if __name__ == '__main__':

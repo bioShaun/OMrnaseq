@@ -11,6 +11,7 @@ import envoy
 import subprocess
 from PIL import Image
 from click import Option, UsageError
+import itertools
 
 
 class MutuallyExclusiveOption(Option):
@@ -261,3 +262,21 @@ def pipe_default_para(proj_dir, max_worker=8):
 def save_mkdir(path):
     if not os.path.isdir(path):
         os.makedirs(path)
+
+
+def get_compare_names(contrasts, sample_inf):
+    if not contrasts:
+        group_sample_df = pd.read_table(
+            sample_inf, header=None, index_col=0)
+        compare_list = itertools.combinations(
+            group_sample_df.index.unique(), 2)
+        compare_name_list = ['{0}_vs_{1}'.format(
+            each_compare[0], each_compare[1])
+            for each_compare in compare_list]
+    else:
+        contrasts_df = pd.read_table(
+            contrasts, header=None)
+        compare_name_list = ['{0}_vs_{1}'.format(contrasts_df.loc[i, 0],
+                                                 contrasts_df.loc[i, 1])
+                             for i in contrasts_df.index]
+    return compare_name_list
