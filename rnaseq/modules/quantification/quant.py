@@ -16,6 +16,8 @@ MODULE, _ = os.path.splitext(script_name)
 KALLISTO_TO_TABLE = os.path.join(script_dir, 'kallisto_to_table.R')
 DIFF_ANALYSIS = os.path.join(script_dir, 'diff_analysis.R')
 QUANT_REPORT = os.path.join(script_dir, 'quant_report.R')
+VENN_PLOT = os.path.join(script_dir, 'venn_plot.py')
+DIFF_SEQ = os.path.join(script_dir, 'extract_diff_gene_seq.py')
 
 
 class quant_prepare_dir(prepare):
@@ -76,9 +78,13 @@ class run_diff(simple_task):
     kallisto_dir = config.module_dir[MODULE]['kallisto']
     exp_dir = config.module_dir[MODULE]['exp']
     diff_dir = config.module_dir[MODULE]['diff']
+    _extract_diff_gene_seq_py = DIFF_SEQ
 
     def get_tag(self):
         return self.compare
+
+    def treat_parameter(self):
+        self.tr_fa = self.tr_index.split('.kallisto_idx')[0]
 
 
 @inherits(kallisto_to_matrix)
@@ -114,6 +120,9 @@ class venn_plot(simple_task):
 
     _module = MODULE
     contrasts = luigi.Parameter(default='')
+    _plot_venn_py = VENN_PLOT
+    exp_dir = config.module_dir[MODULE]['exp']
+    diff_dir = config.module_dir[MODULE]['diff']
 
     def treat_parameter(self):
         self.compare_name_list = get_compare_names(
