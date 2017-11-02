@@ -3,10 +3,9 @@
 import luigi
 from luigi.util import requires, inherits
 import os
-import itertools
-import pandas as pd
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import txt_to_excel
+from rnaseq.utils.util_functions import get_compare_names
 from rnaseq.modules.base_module import prepare
 from rnaseq.modules.base_module import simple_task
 from rnaseq.modules.base_module import collection_task
@@ -17,6 +16,8 @@ MODULE, _ = os.path.splitext(script_name)
 KALLISTO_TO_TABLE = os.path.join(script_dir, 'kallisto_to_table.R')
 DIFF_ANALYSIS = os.path.join(script_dir, 'diff_analysis.R')
 QUANT_REPORT = os.path.join(script_dir, 'quant_report.R')
+VENN_PLOT = os.path.join(script_dir, 'venn_plot.py')
+DIFF_SEQ = os.path.join(script_dir, 'extract_diff_gene_seq.py')
 
 
 class quant_prepare_dir(prepare):
@@ -77,9 +78,13 @@ class run_diff(simple_task):
     kallisto_dir = config.module_dir[MODULE]['kallisto']
     exp_dir = config.module_dir[MODULE]['exp']
     diff_dir = config.module_dir[MODULE]['diff']
+    _extract_diff_gene_seq_py = DIFF_SEQ
 
     def get_tag(self):
         return self.compare
+
+    def treat_parameter(self):
+        self.tr_fa = self.tr_index.split('.kallisto_idx')[0]
 
 
 @inherits(kallisto_to_matrix)
@@ -89,20 +94,7 @@ class get_excel_table(simple_task):
     contrasts = luigi.Parameter(default='')
 
     def requires(self):
-        if not self.contrasts:
-            group_sample_df = pd.read_table(
-                self.sample_inf, header=None, index_col=0)
-            compare_list = itertools.combinations(
-                group_sample_df.index.unique(), 2)
-            compare_name_list = ['{0}_vs_{1}'.format(
-                each_compare[0], each_compare[1])
-                for each_compare in compare_list]
-        else:
-            contrasts_df = pd.read_table(
-                self.contrasts, header=None)
-            compare_name_list = ['{0}_vs_{1}'.format(contrasts_df.loc[i, 0],
-                                                     contrasts_df.loc[i, 1])
-                                 for i in contrasts_df.index]
+        compare_name_list = get_compare_names(self.contrasts, self.sample_inf)
 
         return [run_diff(compare=each_compare, proj_dir=self.proj_dir,
                          clean_dir=self.clean_dir, tr_index=self.tr_index,
@@ -124,6 +116,21 @@ class get_excel_table(simple_task):
 
 
 @requires(get_excel_table)
+class venn_plot(simple_task):
+
+    _module = MODULE
+    contrasts = luigi.Parameter(default='')
+    _plot_venn_py = VENN_PLOT
+    exp_dir = config.module_dir[MODULE]['exp']
+    diff_dir = config.module_dir[MODULE]['diff']
+
+    def treat_parameter(self):
+        self.compare_name_list = get_compare_names(
+            self.contrasts, self.sample_inf)
+        self.compare_name_str = ','.join(self.compare_name_list)
+
+
+@requires(venn_plot)
 class quant_report_data(simple_task):
     '''
     generate table and plots for report

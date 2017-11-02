@@ -52,7 +52,7 @@ class assembly_stringtie_m(simple_task):
     _stringtie = config.module_software['stringtie']
     assemble_dir = config.module_dir['assembly']['assemble']
     merge_dir = config.module_dir['assembly']['merge']
-    merge_out = config.file_suffix['assembly']['merge_gtf']
+    merge_gtf = config.file_suffix['assembly']['merge_gtf']
 
     def treat_parameter(self):
         cmd = 'ls {t.proj_dir}/{t.assemble_dir}/*gtf > \
@@ -65,7 +65,8 @@ class assembly_stringtie_m(simple_task):
                        for each in open(self.sample_inf)]
         return [assembly_stringtie_a(sample=sample, bam_dir=self.bam_dir,
                                      gtf=self.gtf, proj_dir=self.proj_dir,
-                                     ) for sample in sample_list]
+                                     genome_fa=self.genome_fa)
+                for sample in sample_list]
 
 
 @requires(assembly_stringtie_m)
