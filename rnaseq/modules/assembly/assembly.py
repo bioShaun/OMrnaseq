@@ -52,7 +52,7 @@ class assembly_stringtie_m(simple_task):
     _stringtie = config.module_software['stringtie']
     assemble_dir = config.module_dir['assembly']['assemble']
     merge_dir = config.module_dir['assembly']['merge']
-    merge_out = config.file_suffix['assembly']['merge_gtf']
+    merge_gtf = config.file_suffix['assembly']['merge_gtf']
 
     def treat_parameter(self):
         cmd = 'ls {t.proj_dir}/{t.assemble_dir}/*gtf > \

@@ -8,7 +8,7 @@ p <- add_argument(p, "--enrich_table", help = "enrich result table")
 argv <- parse_args(p)
 
 # for test
-enrich_table <- 'up_genes.kegg.enrichment.txt'
+#enrich_table <- 'up_genes.kegg.enrichment.txt'
 
 # read parameters
 enrich_table <- argv$enrich_table
@@ -31,8 +31,10 @@ if (enrich_type == 'go') {
 }
 colnames(enrich_data_plot) <- c('pvalue', 'term', 'ontology')
 enrich_data_plot_filter <- enrich_data_plot[enrich_data_plot$pvalue < 0.05, ]
-if (dim(enrich_data_plot_filter)[1] < 15) {
+if (dim(enrich_data_plot_filter)[1] > 15) {
   enrich_data_plot_filter <- enrich_data_plot[1:15,]
+} else {
+  enrich_data_plot_filter <- enrich_data_plot
 }
 
 enrich_data_plot_filter$logpvalue <- -log10(enrich_data_plot_filter$pvalue)
@@ -69,7 +71,7 @@ if (enrich_type == 'go') {
 
 # adjust output size according to term number
 term_number <- dim(enrich_data_plot_filter)[1]
-plot_width <- term_number/5 + 3
-plot_heith <- term_number/8 + 3
+plot_width <- term_number/8 + 4
+plot_heith <- term_number/8 + 6
 ggsave(filename=paste(file_prefix_path, 'barplot.png', sep = '.'), type = 'cairo-png', plot = p, width = plot_width, height = plot_heith, dpi=300)
 ggsave(filename=paste(file_prefix_path, 'barplot.pdf', sep = '.'), plot = p, width = plot_width, height = plot_heith)
