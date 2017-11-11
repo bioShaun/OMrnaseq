@@ -117,7 +117,7 @@ class cp_analysis_result(simple_task):
     proj_dir = luigi.Parameter()
 
     def run(self):
-        _run_cmd = config.module_cmd['cp_results'].format(
+        _run_cmd = config.module_cmd[self._tag].format(
             t=self)
         _process = envoy.run(_run_cmd)
         with self.output().open('w') as simple_task_log:

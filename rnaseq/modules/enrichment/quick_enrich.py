@@ -108,6 +108,7 @@ class q_enrich_collection(collection_task):
 class q_enrich_result(cp_analysis_result):
 
     _module = MODULE
+    _tag = 'cp_results_only'
     main_dir = config.module_dir[_module]['main']
     result_dir = config.module_dir['result']['main']
 
