@@ -29,6 +29,7 @@ module_name:
     - 'kallisto_to_matrix'
     - 'run_diff'
     - 'get_excel_table'
+    - 'venn_plot'
     - 'quant_report_data'
   enrich:
     - 'run_goseq'
@@ -159,7 +160,6 @@ module_cmd:
   quant:
     run_kallisto: '{t._kallisto} quant
                   -i {t.tr_index}
-                  --bootstrap-samples=100
                   --output-dir {t.proj_dir}/{t.kallisto_dir}/{t.sample}
                   {t.clean_dir}/{t.sample}_1.{t.fq_suffix}
                   {t.clean_dir}/{t.sample}_2.{t.fq_suffix}'
@@ -176,7 +176,16 @@ module_cmd:
                --gene2tr {t.gene2tr}
                --out_dir {t.proj_dir}/{t.diff_dir}/{t.compare}
                --qvalue {t.qvalue}
-               --logfc {t.logfc}'
+               --logfc {t.logfc} |
+               python {t._extract_diff_gene_seq_py}
+               --fasta {t.tr_fa}
+               --diff_dir {t.proj_dir}/{t.diff_dir}/
+               --compare {t.compare}'
+    venn_plot: 'python {t._plot_venn_py}
+                --diff_dir {t.proj_dir}/{t.diff_dir}
+                --combination {t.compare_name_str}
+                --out_dir {t.proj_dir}/{t.exp_dir}/venn
+                --all'
     quant_report_data: '{t._R} {t._quant_report_r}
                         --exp_dir {t.proj_dir}/{t.exp_dir}
                         --diff_dir {t.proj_dir}/{t.diff_dir}
@@ -184,7 +193,8 @@ module_cmd:
                         --qvalue {t.qvalue}
                         --logfc {t.logfc}'
   quick_enrich:
-    run_goseq: '{t._R} {t._run_goseq_script}
+    run_goseq: 'mkdir -p {t.proj_dir}/{t._go_dir}/{t.name} |
+                {t._R} {t._run_goseq_script}
                 --name {t.name}
                 --gene_list {t.genes}
                 --go_anno {t.go}
@@ -259,6 +269,12 @@ module_cmd:
                   {t.result_dir}
                   --pdf
                   --part'
+  cp_results_only: 'rsync
+                    -av
+                    --copy-links
+                    --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
+                    {t.proj_dir}/{t.main_dir}
+                    {t.proj_dir}/{t.result_dir}'
   cp_results: 'rsync
                -av
                --copy-links
@@ -284,7 +300,8 @@ pipe_cmd: '_module_summary pipe_all
            --database {t.database}
            --workers {t.workers}
            --database-version {t.database_version}
-           --kegg-bg {t.kegg_bg}'
+           --kegg-bg {t.kegg_bg}
+           --contrasts = {t.contrasts}'
 
 
 

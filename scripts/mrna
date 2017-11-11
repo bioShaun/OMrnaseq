@@ -18,7 +18,8 @@ DEFAULT_WORKER, DEFAULT_SP = pipe_default_para(CURRENT_DIR)
 class RunPipe(object):
 
     def __init__(self, proj_dir, sample_inf, fq_dir, workers, latin_name,
-                 kegg_bg, database, database_version, module, re_run=None):
+                 kegg_bg, database, database_version, module, re_run=None,
+                 contrasts=''):
         self.proj_dir = proj_dir
         self.sample_inf = sample_inf
         self.fq_dir = fq_dir
@@ -29,6 +30,7 @@ class RunPipe(object):
         self.kegg_bg = kegg_bg
         self.module = module
         self.re_run = re_run
+        self.contrasts = contrasts
 
     @property
     def clean(self):
@@ -59,6 +61,10 @@ class RunPipe(object):
               type=click.Path(exists=True), default=DEFAULT_SAMPLE_INI,
               help='group vs sample file, default is "sample.ini"\
               in current directory.')
+@click.option('-c', '--contrasts',
+              type=click.Path(dir_okay=False),
+              default='',
+              help='Differential analysis contrasts file.')
 @click.option('-f', '--fq_dir',
               type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
               help='directory place analysis fq files, \
@@ -83,14 +89,15 @@ class RunPipe(object):
               cls=MutuallyExclusiveOption, mutually_exclusive=["module"],
               help='re-run parts of modules, seperated with ",".')
 def main(proj_dir, sample_inf, fq_dir, database, database_version,
-         workers, latin_name, module, re_run, kegg_bg):
+         workers, latin_name, module, re_run, kegg_bg, contrasts):
     if not workers:
         sys.exit('worker number must be specified!')
     else:
         if not latin_name:
             sys.exit('species latin name must be specified!')
     my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
-                      kegg_bg, database, database_version, module, re_run)
+                      kegg_bg, database, database_version, module, re_run,
+                      contrasts)
     my_pipe.module = module
     my_pipe.re_run = re_run
     my_pipe.clean
