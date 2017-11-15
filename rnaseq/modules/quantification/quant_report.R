@@ -34,16 +34,14 @@ logfc <- argv$logfc
 
 samples <- read.delim(sample_inf, stringsAsFactors = F, header = F)
 colnames(samples) <- c("condition", "sample")
-all_combine = combn(unique(samples$condition), 2)
-
+compare_names <- basename(list.dirs(diff_dir, recursive=F))
+# all_combine = combn(unique(samples$condition), 2)
 diff_df_list = list()
-plot_number = min(c(16, dim(all_combine)[2]))
+plot_number = min(c(16, length(compare_names)))
 
 diff_genes <- c()
-for (i in seq(dim(all_combine)[2])) {
+for (each_compare in compare_names) {
 
-  each_pair <- all_combine[, i]
-  each_compare <- paste(each_pair[1], "_vs_", each_pair[2], sep = "")
   each_compare_name = paste(each_compare, "edgeR.DE_results.txt", sep = ".")
   each_compare_file = file.path(diff_dir, each_compare, each_compare_name)
   each_compare_df <- fread(each_compare_file)
@@ -52,8 +50,9 @@ for (i in seq(dim(all_combine)[2])) {
   each_compare_diff_df <- filter(each_compare_df, abs(logFC) >= logfc, FDR <= qvalue)
   each_diff_genes <- each_compare_diff_df$Gene_ID
   diff_genes <- c(diff_genes, each_diff_genes)
-  if (i <= MERGED_VOL_PLOT_NUM) {
-    diff_df_list[[i]] <- each_compare_plot
+  compare_num <- match(each_compare, compare_names)
+  if (compare_num <= MERGED_VOL_PLOT_NUM) {
+    diff_df_list[[compare_num]] <- each_compare_plot
   }
 }
 
