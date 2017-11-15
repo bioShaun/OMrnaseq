@@ -76,7 +76,11 @@ for each_sample in sample_list:
             for eachline in each_qc_file_info:
                 eachline_info = eachline.strip().split('\t')
                 if 'Sequence length' in eachline:
-                    sample_info_dict[each_sample][0] = int(eachline_info[1])
+                    if '-' in eachline_info[1]:
+                        s_len = int(eachline_info[1].split('-')[-1])
+                    else:
+                        s_len = int(eachline_info[1])
+                    sample_info_dict[each_sample][0] = s_len
                 if 'Total Sequences' in eachline:
                     sample_info_dict[each_sample][1] += int(eachline_info[1])
                 if eachline.startswith("%GC"):

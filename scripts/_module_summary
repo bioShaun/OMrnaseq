@@ -89,6 +89,7 @@ class pipe_all(simple_task):
     kegg_bg = luigi.Parameter()
     sample_inf = luigi.Parameter()
     clean_dir = luigi.Parameter()
+    contrasts = luigi.Parameter()
 
     def get_module_list(self):
         run_module_list = self.run_modules.split(',')
@@ -124,7 +125,8 @@ class pipe_all(simple_task):
                              sample_inf=self.sample_inf,
                              proj_dir=self.proj_dir,
                              tr_index=my_sp_inf.transcript_index,
-                             gene2tr=my_sp_inf.gene_tr)
+                             gene2tr=my_sp_inf.gene_tr,
+                             contrasts=self.contrasts)
 
         if 'enrich' in run_module_list:
             if self.kegg_bg == 'none':

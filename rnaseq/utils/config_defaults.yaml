@@ -300,7 +300,8 @@ pipe_cmd: '_module_summary pipe_all
            --database {t.database}
            --workers {t.workers}
            --database-version {t.database_version}
-           --kegg-bg {t.kegg_bg}'
+           --kegg-bg {t.kegg_bg}
+           --contrasts {t.contrasts}'
 
 
 
