@@ -26,7 +26,7 @@ setup(
         'envoy',
         'xlsxwriter',
         'pandas',
-        'rpy2',
+        'rpy2<=2.8.6',
         'packaging',
         'docopt',
         'HTSeq',
