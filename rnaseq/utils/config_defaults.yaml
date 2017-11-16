@@ -132,7 +132,8 @@ module_cmd:
                          --outFilterMismatchNmax 999
                          --alignIntronMin 20
                          --alignIntronMax 1000000
-                         --alignMatesGapMax 1000000'
+                         --alignMatesGapMax 1000000
+                         --chimSegmentMin 10'
     get_bam_file: 'ln -s {t.proj_dir}/{t._mapping_dir}/{t.sample}/Aligned.sortedByCoord.out.bam {t.proj_dir}/{t._bam_dir}/{t.sample}.bam |
                    samtools index {t.proj_dir}/{t._bam_dir}/{t.sample}.bam'
     star_mapping_summary: 'python {t._stats_script} {t.sample_inf} {t.proj_dir}/{t._mapping_dir} {t.proj_dir}/{t._main_dir}/mapping_stats |
