@@ -54,18 +54,39 @@ y <- DGEList(cts)
 normfactors <- calcNormFactors(y)
 gene_tpm_matrix <- (txi$abundance)/(normfactors$samples$norm.factors)
 
+### transcript level expression matrix
+txi.tx <- tximport(files, type = "kallisto", txOut = TRUE, tx2gene = tx2gene)
+cts.tx <- txi.tx$counts
+y.tx <- DGEList(cts.tx)
+normfactors.tx <- calcNormFactors(y.tx)
+tx_tpm_matrix <- (txi.tx$abundance)/(normfactors.tx$samples$norm.factors)
+
 ## output quant table
 out_gene_tpm_matrix <- as.data.frame(gene_tpm_matrix)
 out_gene_tpm_matrix <- round(out_gene_tpm_matrix, 3)
 out_gene_tpm_matrix <- rownames_to_column(out_gene_tpm_matrix, var="Gene_ID")
-
 out_cts <- as.data.frame(cts)
 out_cts <- round(out_cts, 3)
 out_cts <- rownames_to_column(out_cts, var = 'Gene_ID')
+
+
+### output transcript level quant table
+out_tx_tpm_matrix <- as.data.frame(tx_tpm_matrix)
+out_tx_tpm_matrix <- round(out_tx_tpm_matrix, 3)
+out_tx_tpm_matrix <- rownames_to_column(out_tx_tpm_matrix, var='Transcript_ID')
+
+
+out_tx_cts <- as.data.frame(cts.tx)
+out_tx_cts <- round(out_tx_cts, 3)
+out_tx_cts <- rownames_to_column(out_tx_cts, var = 'Transcript_ID')
+
 write.table(out_cts, file = paste(expression_stat_dir, 'Gene.count.txt', sep = '/'), quote=F, row.names = F, sep = '\t')
 #write.xlsx(out_cts, file = paste(expression_stat_dir, 'Gene.count.xlsx', sep = '/'), sheetName = "gene.count", append = FALSE, row.names = F)
 write.table(out_gene_tpm_matrix, file = paste(expression_stat_dir, 'Gene.tpm.txt', sep = '/'), quote = F, row.names = F, sep = '\t')
 #write.xlsx(out_gene_tpm_matrix, file = paste(expression_stat_dir, 'Gene.tpm.xlsx', sep = '/'), sheetName = "gene.tpm", append = FALSE, row.names = F)
+
+write.table(out_tx_cts, file = paste(expression_stat_dir, 'Transcript.count.txt', sep = '/'), quote=F, row.names = F, sep = '\t')
+write.table(out_tx_tpm_matrix, file = paste(expression_stat_dir, 'Transcript.tpm.txt', sep = '/'), quote = F, row.names = F, sep = '\t')
 
 ## boxplot
 om_boxplot(plot_data = gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
