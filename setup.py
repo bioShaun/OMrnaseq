@@ -31,7 +31,8 @@ setup(
         'docopt',
         'HTSeq',
         'click',
-        'Pillow'],
+        'Pillow',
+        'biopython'],
 )
 
 print '''------------------------------

@@ -89,7 +89,7 @@ class pipe_all(simple_task):
     kegg_bg = luigi.Parameter()
     sample_inf = luigi.Parameter()
     clean_dir = luigi.Parameter()
-    contrasts = luigi.Parameter()
+    contrasts = luigi.Parameter(default='')
 
     def get_module_list(self):
         run_module_list = self.run_modules.split(',')

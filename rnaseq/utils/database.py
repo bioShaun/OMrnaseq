@@ -2,7 +2,7 @@ import yaml
 import os
 from . import config
 import sys
-from omdatabase import species
+from omdatabase.lib import species
 
 
 SPECIES_KINGDOM = ('animal', 'plant')
@@ -98,8 +98,7 @@ class sepcies_annotation_path(object):
                             #     n=self.sp_db_version, p=database_dir
                             # ))
                             self.exists = False
-        _species = ' '.join(self.sp_latin.split('_'))
-        my_sp_inf = species.Species(_species)
+        my_sp_inf = species.Species(self.sp_latin)
         self.kingdom = my_sp_inf.kingdom
         sp_database_dir = os.path.join(database_dir, self.sp_database,
                                        self.kingdom, self.sp_latin,
