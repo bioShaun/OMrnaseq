@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from rnaseq.utils import config
 from rnaseq.modules.base_module import prepare
-from rnaseq.modules.base_module import simple_task
+from rnaseq.modules.base_module import simple_task, simple_task_test
 from rnaseq.modules.base_module import collection_task
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
@@ -14,10 +14,21 @@ MODULE, _ = os.path.splitext(script_name)
 GC_PLOT_R = os.path.join(script_dir, 'gc_plot_report.R')
 RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot_report.R')
 FASTQC_SUMMERY = os.path.join(script_dir, 'fastqc_summary_report.py')
+FQ_CFG = os.path.join(script_dir, 'get_fq_cfg.py')
 
 
 class fastqc_prepare(prepare):
     _module = MODULE
+
+
+@requires(fastqc_prepare)
+class get_fq_cfg(simple_task):
+    '''
+    get fastq config file
+    '''
+    fq_dir = luigi.Parameter()
+    _script = FQ_CFG
+    cfg = config.file_suffix[MODULE]['fq_cfg']
 
 
 @requires(fastqc_prepare)
@@ -47,9 +58,11 @@ class fastqc_summary(simple_task):
     _module = MODULE
     _script = FASTQC_SUMMERY
     _dir = config.module_dir[MODULE]['main']
+    cfg = config.file_suffix[MODULE]['fq_cfg']
 
     def requires(self):
-        sample_df = pd.read_table(self.sample_inf, header=None,
+        sample_inf = os.path.join(self.proj_dir, self.cfg)
+        sample_df = pd.read_table(sample_inf, header=None,
                                   names=['read1', 'read2'], index_col=0)
         return [run_fastqc(sample=sample,
                            read1=sample_df.loc[sample, 'read1'],
@@ -79,6 +92,16 @@ class reads_quality_plot(simple_task):
 
 
 @requires(reads_quality_plot)
+class fastqc_report(simple_task):
+    '''
+    print fastqc report
+    '''
+    _module = MODULE
+    proj_name = luigi.Parameter()
+    _dir = config.module_dir[MODULE]['main']
+
+
+@requires(fastqc_report)
 class fastqc_collection(collection_task):
     _module = MODULE
 

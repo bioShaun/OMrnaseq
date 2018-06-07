@@ -81,6 +81,8 @@ module_dir:
     result: 'result/analysis_result'
     report: 'result/analysis_report'
     report_data: 'result/analysis_report/report_data'
+  _qc_wrapper:
+    logs: 'logs'
   result:
     main: 'result'
     result: 'result/analysis_result'
@@ -120,6 +122,7 @@ module_cmd:
               --sample_inf {t.sample_inf}'
     reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
   qc_report:
+    get_fq_cfg: 'python {t._script} {t.fq_dir} {t.proj_dir}/{t.cfg} {t.proj_dir}'
     run_fastqc: '{t.fastqc_bin}
                 {t.read1} {t.read2}
                 --extract
@@ -127,6 +130,7 @@ module_cmd:
     fastqc_summary: 'python {t._script} {t.sample_inf} {t.proj_dir}/{t._dir} {t.proj_dir}/{t._dir}/fastqc_general_stats'
     gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir} --sample_inf {t.sample_inf}'
     reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
+    fastqc_report: 'qc_report -n {t.proj_name} {t.proj_dir}/{t._dir}'
   star_mapping:
     run_star: 'mkdir -p {t.proj_dir}/{t._mapping_dir}/{t.sample}/ |
                {t._star} --genomeDir {t.star_index}
@@ -287,6 +291,12 @@ module_cmd:
                     --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
                     {t.proj_dir}/{t.main_dir}
                     {t.proj_dir}/{t.result_dir}'
+  cp_results_rename: 'rsync
+                      -av
+                      --copy-links
+                      --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
+                      {t.proj_dir}/{t.main_dir}/
+                      {t.proj_dir}/{t.result_dir}'
   cp_results: 'rsync
                -av
                --copy-links
@@ -331,6 +341,14 @@ module_file:
       - 'fastqc_general_stats.txt'
       - 'gc_plot/*gc_distribution.line.png'
       - 'reads_quality_plot/*reads_quality.bar.png'
+  qc_report:
+    ignore_files:
+      - '.ignore'
+      - 'logs'
+      - 'fastqc_results/*zip'
+      - 'summary'
+      - 'gc_plot/gc_distribution.line.report.*'
+      - 'reads_quality_plot/reads_quality.bar.report.*'
   star_mapping:
     ignore_files:
       - '.ignore'
@@ -409,6 +427,8 @@ file_suffix:
     merge_gtf: 'merged.gtf'
     merge_fa: 'merged.fa'
     gene_tr_map: 'gene_trans.map'
+  qc_report:
+    fq_cfg: 'fq.cfg'
 
 
 #################################################
