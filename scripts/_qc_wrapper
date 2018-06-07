@@ -1,0 +1,43 @@
+#!/usr/bin/env python
+
+import os
+import luigi
+from luigi.util import requires
+from rnaseq.utils import config
+from rnaseq.modules.fastqc import qc_report
+from rnaseq.modules.base_module import prepare, simple_task, cp_analysis_result
+
+
+script_dir, script_name = os.path.split(os.path.abspath(__file__))
+MODULE, _ = os.path.splitext(script_name)
+
+
+class qc_prepare(prepare):
+    _module = MODULE
+
+
+@requires(qc_report.fastqc_collection)
+class pipe_qc_report(cp_analysis_result):
+    _module = MODULE
+    _tag = 'cp_results_rename'
+    main_dir = config.module_dir['fastqc']['main']
+    result_dir = 'QC_report'
+
+
+@requires(qc_prepare)
+class qc(simple_task):
+    _module = MODULE
+    sample_inf = luigi.Parameter()
+    proj_name = luigi.Parameter()
+
+    def run(self):
+        yield pipe_qc_report(sample_inf=self.sample_inf,
+                             proj_dir=self.proj_dir,
+                             proj_name=self.proj_name)
+
+        with self.output().open('w') as log_inf:
+            log_inf.write('finished fastqc report!')
+
+
+if __name__ == '__main__':
+    luigi.run()

@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+import click
+import os
+
+
+CURRENT_DIR = os.getcwd()
+DEFAULT_DIR = os.path.abspath(CURRENT_DIR)
+DEFAULT_NAME = os.path.basename(DEFAULT_DIR)
+
+
+SCRIPT_TEMP = '''
+#! /bin/bash
+_qc_wrapper qc \\
+    --proj-dir {pd} \\
+    --workers {wk} \\
+    --proj-name {pn} \\
+    --fq-dir {fd} 
+'''
+
+
+@click.command()
+@click.option(
+    '-p',
+    '--proj_dir',
+    type=click.Path(exists=True, file_okay=False),
+    default=DEFAULT_DIR,
+    help='project analysis directory, default is current dir.'
+)
+@click.option(
+    '-n',
+    '--proj_name',
+    type=click.STRING,
+    default=DEFAULT_NAME,
+    help='project name to put on report.'
+)
+@click.option(
+    '-d',
+    '--fq_dir',
+    required=True,
+    help='directory store fastq files.',
+    type=click.Path(file_okay=False, exists=True)
+)
+def main(proj_dir, proj_name, fq_dir):
+    workers = 4
+    qc_script = os.path.join(proj_dir, 'qc.sh')
+    with open(qc_script, 'w') as qc_inf:
+        qc_cont = SCRIPT_TEMP.format(
+            pd=proj_dir,
+            pn=proj_name,
+            fd=fq_dir,
+            wk=workers
+        )
+        qc_inf.write(qc_cont)
+
+
+if __name__ == '__main__':
+    main()

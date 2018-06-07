@@ -7,6 +7,7 @@ from rnaseq.utils import config
 from rnaseq.utils import database
 from rnaseq.utils.util_functions import resize_report_plot, rename_result_dir
 from rnaseq.modules.fastqc import fastqc
+from rnaseq.modules.fastqc import qc_report
 from rnaseq.modules.quantification import quant
 from rnaseq.modules.mapping import star_mapping
 from rnaseq.modules.enrichment import enrich
@@ -24,11 +25,20 @@ MODULE_DP = {
     'quant': ['quant'],
     'mapping': ['mapping'],
     'enrich': ['quant', 'enrich'],
+    'qc_report': ['qc_report'],
 }
 
 
 class pipe_prepare(prepare):
     _module = MODULE
+
+
+@requires(qc_report.fastqc_collection)
+class pipe_qc_report(cp_analysis_result):
+    _module = MODULE
+    _tag = 'cp_results_only'
+    main_dir = config.module_dir['fastqc']['main']
+    result_dir = config.module_dir['result']['result']
 
 
 @requires(fastqc.fastqc_collection)
@@ -109,6 +119,8 @@ class pipe_all(simple_task):
             sys.exit('database not exists.')
         my_sp_inf.get_anno_inf()
         run_module_list = self.get_module_list()
+        if 'qc_report' in run_module_list:
+            yield pipe_qc_report(proj_dir=self.proj_dir)
         if 'fastqc' in run_module_list:
             yield pipe_fastqc(clean_dir=self.clean_dir,
                               sample_inf=self.sample_inf,
