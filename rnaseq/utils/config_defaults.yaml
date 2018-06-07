@@ -44,12 +44,14 @@ module_dir:
   test:
     main: 'test_dir'
     logs: 'test_dir/logs'
-  fastqc:
+  fastqc: &fastqc
     main: 'fastqc'
     logs: 'fastqc/logs'
     fastqc: 'fastqc/fastqc_results'
     gc: 'fastqc/gc_plot'
     reads_quality: 'fastqc/reads_quality_plot'
+  qc_report:
+    <<: *fastqc
   star_mapping:
     main: 'mapping'
     bam: 'mapping/bam_dir'
@@ -94,7 +96,8 @@ module_dir:
 ########################################
 module_software:
   fastqc: 'fastqc'
-  Rscript: 'Rscript'
+  qc_report: '/workspace/software/FastQC/fastqc'
+  Rscript: '/workspace/software/R/R-3.5.0/executable/bin/Rscript'
   star_mapping: 'STAR'
   kallisto: 'kallisto'
   stringtie: 'stringtie'
@@ -115,6 +118,14 @@ module_cmd:
     gc_plot: '{t._R} {t._script}
               --gc_dir {t.proj_dir}/{t._dir}
               --sample_inf {t.sample_inf}'
+    reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
+  qc_report:
+    run_fastqc: '{t.fastqc_bin}
+                {t.read1} {t.read2}
+                --extract
+                -o {t.proj_dir}/{t.fastqc_dir}'
+    fastqc_summary: 'python {t._script} {t.sample_inf} {t.proj_dir}/{t._dir} {t.proj_dir}/{t._dir}/fastqc_general_stats'
+    gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir} --sample_inf {t.sample_inf}'
     reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
   star_mapping:
     run_star: 'mkdir -p {t.proj_dir}/{t._mapping_dir}/{t.sample}/ |
