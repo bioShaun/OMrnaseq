@@ -3,6 +3,7 @@ library(scales)
 library(ggplot2)
 library(ggthemes)
 suppressMessages(require('kimisc',quietly = T))
+suppressMessages(require(dplyr, quietly = T))
 
 argv <- commandArgs(T)
 file_path <- argv[1]
@@ -47,6 +48,8 @@ for (i in 1:length(qulity_data)) {
 }
 
 qulity_data_df <- ldply(qulity_data, data.frame)
-qulity_data_df$sample <- factor(qulity_data_df$sample, levels = group_inf_df$V1)
-qulity_data_out <- file.path(file_path, 'reads_quality.bar')
-reads_quality_plot(qulity_data_df, qulity_data_out)
+selected_number <- ifelse(length(group_inf_df$V1) < 9, length(group_inf_df$V1), 9)
+selected_df <- filter(qulity_data_df, sample %in% group_inf_df$V1[1:selected_number])
+selected_df$sample <- factor(selected_df$sample, levels = group_inf_df$V1)
+qulity_data_out <- file.path(file_path, 'reads_quality.bar.report')
+reads_quality_plot(selected_df, qulity_data_out)

@@ -6,6 +6,7 @@ suppressMessages(require('reshape2',quietly = T))
 suppressMessages(require('scales',quietly = T))
 suppressMessages(require('argparser',quietly = T))
 suppressMessages(require('kimisc',quietly = T))
+suppressMessages(require('dplyr', quietly = T))
 
 
 script_dir <- dirname(thisfile())
@@ -51,6 +52,8 @@ for (i in seq(sample_number)) {
 gc_file_df <- ldply(gc_file_list, data.frame)
 rs_gc_file_df <- melt(gc_file_df,id=c('X.Base', 'sample'))
 
-gc_plot_out <- file.path(gc_dir, 'gc_distribution.line')
-rs_gc_file_df$sample <- factor(rs_gc_file_df$sample, levels = group_inf_df$V1)
-gc_line_plot(rs_gc_file_df, gc_plot_out)
+selected_num <- ifelse(sample_number < 9, sample_number, 9)
+selected_df <- filter(rs_gc_file_df, sample %in% group_inf_df$V1[1:selected_num])
+gc_plot_out <- file.path(gc_dir, 'gc_distribution.line.report')
+selected_df$sample <- factor(selected_df$sample, levels = group_inf_df$V1)
+gc_line_plot(selected_df, gc_plot_out)
