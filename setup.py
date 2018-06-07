@@ -19,7 +19,10 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     scripts=['scripts/mrna',
-             'scripts/_module_summary'],
+             'scripts/_module_summary',
+             'scripts/simple_qc',
+             'scripts/_qc_wrapper',
+             'scripts/get_fq_cfg'],
     install_requires=[
         'luigi',
         'pyyaml',

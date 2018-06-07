@@ -21,14 +21,13 @@ class fastqc_prepare(prepare):
     _module = MODULE
 
 
-@requires(fastqc_prepare)
-class get_fq_cfg(simple_task):
-    '''
-    get fastq config file
-    '''
-    fq_dir = luigi.Parameter()
-    _script = FQ_CFG
-    cfg = config.file_suffix[MODULE]['fq_cfg']
+# @requires(fastqc_prepare)
+# class get_fq_cfg(simple_task):
+#     '''
+#     get fastq config file
+#     '''
+#     _script = FQ_CFG
+#     cfg = config.file_suffix[MODULE]['fq_cfg']
 
 
 @requires(fastqc_prepare)
@@ -58,11 +57,9 @@ class fastqc_summary(simple_task):
     _module = MODULE
     _script = FASTQC_SUMMERY
     _dir = config.module_dir[MODULE]['main']
-    cfg = config.file_suffix[MODULE]['fq_cfg']
 
     def requires(self):
-        sample_inf = os.path.join(self.proj_dir, self.cfg)
-        sample_df = pd.read_table(sample_inf, header=None,
+        sample_df = pd.read_table(self.sample_inf, header=None,
                                   names=['read1', 'read2'], index_col=0)
         return [run_fastqc(sample=sample,
                            read1=sample_df.loc[sample, 'read1'],
