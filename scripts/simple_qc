@@ -41,20 +41,23 @@ _qc_wrapper qc \\
 @click.option(
     '-d',
     '--fq_dir',
-    required=True,
     help='directory store fastq files.',
-    type=click.Path(file_okay=False, exists=True)
+    type=click.Path(file_okay=False, exists=True),
+    default=None,
 )
 def main(proj_dir, proj_name, fq_dir):
     workers = 4
     qc_script = os.path.join(proj_dir, 'qc.sh')
     fq_cfg = os.path.join(proj_dir, 'fq_cfg')
     if not os.path.isfile(fq_cfg):
-        os.system('get_fq_cfg {fd} {fc} {pd}/fq_dir'.format(
-            fd=fq_dir,
-            fc=fq_cfg,
-            pd=proj_dir
-        ))
+        if fq_dir is None:
+            print '--fq_dir is needed when fq_cfg not exists!'
+        else:
+            os.system('get_fq_cfg {fd} {fc} {pd}/fq_dir'.format(
+                fd=fq_dir,
+                fc=fq_cfg,
+                pd=proj_dir
+            ))
     with open(qc_script, 'w') as qc_inf:
         qc_cont = SCRIPT_TEMP.format(
             pd=proj_dir,
