@@ -11,13 +11,30 @@ from rnaseq.utils import config
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    '--kegg_table', help='KOBAS kegg enrichment analysis result', required=True)
-parser.add_argument('--blast_out', help='ko blast result', required=True)
-parser.add_argument('--species', help='kegg species', required=True)
-parser.add_argument('--diff_out', help='diff analysis result', default='')
-parser.add_argument('--diff_method', help='diff analysis method',
-                    choices=['edgeR', 'DESeq2', 'Cuffdiff'], default='edgeR')
-parser.add_argument('--out_dir', help='output directory', required=True)
+    '--kegg_table',
+    help='KOBAS kegg enrichment analysis result',
+    required=True)
+parser.add_argument(
+    '--blast_out',
+    help='ko blast result',
+    required=True)
+parser.add_argument(
+    '--species',
+    help='kegg species',
+    required=True)
+parser.add_argument(
+    '--diff_out',
+    help='diff analysis result',
+    default='')
+parser.add_argument(
+    '--diff_method',
+    help='diff analysis method',
+    choices=['edgeR', 'DESeq2', 'Cuffdiff'],
+    default='edgeR')
+parser.add_argument(
+    '--out_dir',
+    help='output directory',
+    required=True)
 args = parser.parse_args()
 
 script_dir = os.path.dirname(os.path.abspath(__file__))

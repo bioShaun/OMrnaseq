@@ -11,7 +11,7 @@ suppressMessages(library(rhdf5))
 suppressMessages(require(kimisc))
 options(stringsAsFactors = F)
 
-script_dir <- dirname(thisfile())
+script_dir <- dirname(rprojroot::thisfile())
 lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
 source(lib_path)
 

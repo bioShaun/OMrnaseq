@@ -63,7 +63,7 @@ class RunPipe(object):
               in current directory.')
 @click.option('-c', '--contrasts',
               type=click.Path(dir_okay=False),
-              default='',
+              default='all_combination',
               help='Differential analysis contrasts file.')
 @click.option('-f', '--fq_dir',
               type=click.Path(exists=True), default=DEFAULT_FQ_DIR,

@@ -4,7 +4,7 @@ import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
-from rnaseq.modules.base_module import prepare, simple_task
+from rnaseq.modules.base_module import prepare, simple_task, simple_task_test
 from rnaseq.modules.base_module import collection_task, cp_analysis_result
 import pandas as pd
 import sys
