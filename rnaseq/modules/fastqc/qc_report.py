@@ -99,7 +99,13 @@ class fastqc_report(simple_task):
 
 
 @requires(fastqc_report)
+class fastqc_report_collection(collection_task):
+    _module = MODULE
+
+
+@requires(reads_quality_plot)
 class fastqc_collection(collection_task):
+    proj_name = luigi.Parameter()
     _module = MODULE
 
 

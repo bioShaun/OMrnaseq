@@ -19,7 +19,8 @@ _qc_wrapper qc \\
     --proj-dir {pd} \\
     --workers {wk} \\
     --proj-name {pn} \\
-    --sample-inf {si} 
+    --sample-inf {si} \\
+    --report {rp}
 '''
 
 
@@ -45,7 +46,14 @@ _qc_wrapper qc \\
     type=click.Path(file_okay=False, exists=True),
     default=None,
 )
-def main(proj_dir, proj_name, fq_dir):
+@click.option(
+    '-nr',
+    '--no_report',
+    help='Do not generate a qc report.',
+    is_flag=True,
+    default=False
+)
+def main(proj_dir, proj_name, fq_dir, no_report):
     workers = 4
     qc_script = os.path.join(proj_dir, 'qc.sh')
     fq_cfg = os.path.join(proj_dir, 'fq_cfg')
@@ -58,12 +66,16 @@ def main(proj_dir, proj_name, fq_dir):
                 fc=fq_cfg,
                 pd=proj_dir
             ))
+    output_report = 'yes'
+    if no_report:
+        output_report = 'no'
     with open(qc_script, 'w') as qc_inf:
         qc_cont = SCRIPT_TEMP.format(
             pd=proj_dir,
             pn=proj_name,
             si=fq_cfg,
-            wk=workers
+            wk=workers,
+            rp=output_report
         )
         qc_inf.write(qc_cont)
     os.system('nohup sh {sh} > {sh}.log 2>&1 &'.format(

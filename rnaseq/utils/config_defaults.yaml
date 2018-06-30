@@ -98,7 +98,7 @@ module_dir:
 ########################################
 module_software:
   fastqc: 'fastqc'
-  qc_report: '/workspace/software/FastQC/fastqc'
+  qc_report: 'fastqc'
   Rscript: '/workspace/software/R/R-3.5.0/executable/bin/Rscript'
   star_mapping: 'STAR'
   kallisto: 'kallisto'

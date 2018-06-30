@@ -17,6 +17,14 @@ class qc_prepare(prepare):
 
 
 @requires(qc_report.fastqc_collection)
+class pipe_qc_result(cp_analysis_result):
+    _module = MODULE
+    _tag = 'cp_results_rename'
+    main_dir = config.module_dir['fastqc']['main']
+    result_dir = 'QC_report'
+
+
+@requires(qc_report.fastqc_report_collection)
 class pipe_qc_report(cp_analysis_result):
     _module = MODULE
     _tag = 'cp_results_rename'
@@ -29,11 +37,17 @@ class qc(simple_task):
     _module = MODULE
     sample_inf = luigi.Parameter()
     proj_name = luigi.Parameter()
+    report = luigi.Parameter()
 
     def run(self):
-        yield pipe_qc_report(sample_inf=self.sample_inf,
-                             proj_dir=self.proj_dir,
-                             proj_name=self.proj_name)
+        if self.report == 'no':
+            yield pipe_qc_result(sample_inf=self.sample_inf,
+                                 proj_dir=self.proj_dir,
+                                 proj_name=self.proj_name)
+        else:
+            yield pipe_qc_report(sample_inf=self.sample_inf,
+                                 proj_dir=self.proj_dir,
+                                 proj_name=self.proj_name)
 
         with self.output().open('w') as log_inf:
             log_inf.write('finished fastqc report!')
