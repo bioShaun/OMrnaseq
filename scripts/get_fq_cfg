@@ -5,7 +5,7 @@ import os
 import re
 
 
-FASTQ_TEMPLATE = '{sample}_{readnumber}.fq.gz'
+FASTQ_TEMPLATE = '{sample}.R{readnumber}.clean.fastq.gz'
 
 
 @click.command()
@@ -28,7 +28,7 @@ FASTQ_TEMPLATE = '{sample}_{readnumber}.fq.gz'
     '-s',
     '--suffix',
     type=click.STRING,
-    default='fq.gz',
+    default='clean.fastq.gz',
     help='fastq file suffix.'
 )
 def main(fq_dir, fq_cfg,

@@ -67,7 +67,8 @@ for each_sample in sample_list:
         reads_quality_dir, '{}.reads_quality.txt'.format(each_sample))
     for n in (1, 2):
         each_qc_dir = os.path.join(
-            qc_dir, 'fastqc_results', '%s_%s_fastqc' % (each_sample, n))
+            qc_dir, 'fastqc_results', '%s.R%s.clean_fastqc' % (each_sample, n))
+        # K1-1_L2_344344.R1.clean_fastqc.zip
         each_qc_file = os.path.join(each_qc_dir, 'fastqc_data.txt')
         with open(each_qc_file) as each_qc_file_info:
             q30_flag = 0
