@@ -37,7 +37,7 @@ _qc_wrapper qc \\
     '--proj_name',
     type=click.STRING,
     default=DEFAULT_NAME,
-    help='project name to put on report.'
+    help='project name to put on report.',
 )
 @click.option(
     '-d',
@@ -51,10 +51,15 @@ _qc_wrapper qc \\
     '--no_report',
     help='Do not generate a qc report.',
     is_flag=True,
-    default=False
+    default=False,
 )
-def main(proj_dir, proj_name, fq_dir, no_report):
-    workers = 4
+@click.option(
+    '-w',
+    '--workers',
+    help='parall thread number [default 4].',
+    default=4,
+)
+def main(proj_dir, proj_name, fq_dir, no_report, workers):
     qc_script = os.path.join(proj_dir, 'qc.sh')
     fq_cfg = os.path.join(proj_dir, 'fq_cfg')
     if not os.path.isfile(fq_cfg):
