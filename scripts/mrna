@@ -7,6 +7,7 @@ from rnaseq.utils import config
 from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
 from rnaseq.utils.util_functions import MutuallyExclusiveOption
 from rnaseq.utils.util_functions import pipe_default_para
+from rnaseq.utils.util_functions import check_data
 
 
 CURRENT_DIR = os.getcwd()
@@ -90,6 +91,10 @@ class RunPipe(object):
               help='re-run parts of modules, seperated with ",".')
 def main(proj_dir, sample_inf, fq_dir, database, database_version,
          workers, latin_name, module, re_run, kegg_bg, contrasts):
+    if check_data(sample_inf, fq_dir):
+        sys.exit('file check failed.')
+    else:
+        print 'passed file check.'
     if not workers:
         sys.exit('worker number must be specified!')
     else:

@@ -280,3 +280,26 @@ def get_compare_names(contrasts, sample_inf):
                                                  contrasts_df.loc[i, 1])
                              for i in contrasts_df.index]
     return compare_name_list
+
+
+def check_data(sample_inf, fq_dir):
+    sample_df = pd.read_table(sample_inf, header=None,
+                              names=['group_id', 'sample_id'])
+    fq_suffix = config.file_suffix['fq']
+
+    def check_fq(sample_id, fq_suffix=fq_suffix):
+        failed_fq = []
+        for fq_id in (1, 2):
+            fq_file = os.path.join(fq_dir,
+                                   '{sp}_{fi}.{sf}'.format(
+                                       sp=sample_id,
+                                       fi=fq_id,
+                                       sf=fq_suffix
+                                   ))
+            if not os.path.exists(fq_file):
+                print '{sp}:{fp} not exist!'.format(sp=sample_id,
+                                                    fp=fq_file)
+                failed_fq.append(fq_file)
+        return failed_fq
+    failed_fqs = map(check_fq, sample_df.sample_id)
+    return [item for sublist in failed_fqs for item in sublist]
