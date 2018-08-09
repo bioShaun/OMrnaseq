@@ -2,25 +2,22 @@
 library(scales)
 library(ggplot2)
 library(ggthemes)
-suppressMessages(require('kimisc',quietly = T))
 suppressMessages(require(dplyr, quietly = T))
 
 argv <- commandArgs(T)
 file_path <- argv[1]
-group_sample <- argv[2]
 options(stringsAsFactors = F)
 
-script_dir <- dirname(thisfile())
+script_dir <- dirname(rprojroot::thisfile())
 lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
 source(lib_path)
 
 # for test
-# source('../../scripts/atom/R/rseqc/RNAseq_plot_lib.R')
-# file_path <- './reads_quality_plot/'
+# source('myproj/OMrnaseq/rnaseq/utils//RNAseq_plot_lib.R')
+# file_path <- 'myproj/ngs_report/fake_report/fastqc/reads_quality_plot/'
 # group_sample <- './group_sample'
 
 all_files <- list.files(file_path)
-group_inf_df <- read.delim(group_sample, header = F)
 qulity_data_files <- all_files[grep("*reads_quality.txt", all_files)]
 qulity_data <- list()
 
@@ -48,8 +45,9 @@ for (i in 1:length(qulity_data)) {
 }
 
 qulity_data_df <- ldply(qulity_data, data.frame)
-selected_number <- ifelse(length(group_inf_df$V1) < 9, length(group_inf_df$V1), 9)
-selected_df <- filter(qulity_data_df, sample %in% group_inf_df$V1[1:selected_number])
-selected_df$sample <- factor(selected_df$sample, levels = group_inf_df$V1)
+qulity_data_samples <- unique(qulity_data_df$sample)
+selected_number <- ifelse(length(qulity_data_samples) < 9, length(qulity_data_samples), 9)
+selected_df <- filter(qulity_data_df, sample %in% qulity_data_samples[1:selected_number])
+selected_df$sample <- factor(selected_df$sample, levels = qulity_data_samples)
 qulity_data_out <- file.path(file_path, 'reads_quality.bar.report')
 reads_quality_plot(selected_df, qulity_data_out)

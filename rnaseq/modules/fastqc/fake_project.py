@@ -1,5 +1,5 @@
 import pandas as pd
-from pandas import DataFrame
+from pandas import DataFrame, Series
 import numpy as np
 import click
 from rnaseq.utils import config
@@ -14,6 +14,9 @@ import itertools
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 GC_PLOT_R = os.path.join(script_dir, 'gc_plot_report.R')
 RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot_report.R')
+GC_TEST_DATA = os.path.join(script_dir, 'test_data', 'unstrand.gc.txt')
+READS_QUAL_TEST_DATA = os.path.join(
+    script_dir, 'test_data', 'reads_quality.txt')
 MODULE = 'fastqc'
 
 
@@ -51,6 +54,31 @@ def generate_sample_data(min_val, max_val, num, step=0.01):
 
 def data_size_upper(data_size, rel_size=0.2, abs_size=5):
     return data_size + max(data_size * rel_size, abs_size)
+
+
+def generate_fake_gc_file(outfile, offset=0.1):
+    example_df = pd.read_table(GC_TEST_DATA)
+    random_num = Series(
+        generate_sample_data(0, offset, len(example_df), step=0.001))
+    example_df.loc[:, 'A'] = example_df.A + random_num
+    example_df.loc[:, 'T'] = example_df.loc[:, 'T'] + random_num
+    example_df.loc[:, 'C'] = example_df.C - random_num
+    example_df.loc[:, 'G'] = example_df.G - random_num
+    example_df.to_csv(outfile, sep='\t', index=False)
+    return example_df
+
+
+def generate_fake_rq_file(outfile, offset=0.05):
+    example_df = pd.read_table(READS_QUAL_TEST_DATA)
+    offset_series = Series(
+        generate_sample_data(1-offset,
+                             1+offset,
+                             len(example_df))
+    )
+    example_df.loc[:, 'Proportion'] = example_df.Proportion * \
+        offset_series
+    example_df.to_csv(outfile, sep='\t', index=False)
+    return example_df
 
 
 @click.command()
@@ -98,7 +126,8 @@ def main(proj_dir, name_abbr, sample_num, data_size):
     data_summary_dict = dict()
     if not name_abbr:
         name_abbr = generate_sample_prefix()
-    data_summary_dict['sample_id'] = generate_sample_name(name_abbr, sample_num)
+    data_summary_dict['sample_id'] = generate_sample_name(
+        name_abbr, sample_num)
     data_summary_dict['data_size'] = generate_sample_data(
         data_size, data_size_upper(data_size), sample_num
     )
@@ -110,11 +139,29 @@ def main(proj_dir, name_abbr, sample_num, data_size):
                                                    sample_num,
                                                    step=1)
     data_summary_df = DataFrame(data_summary_dict)
-    data_summary_df.loc[:, 'reads_num'] = data_summary_df.data_size * 1000 / 150
+    data_summary_df.loc[:, 'reads_num'] = data_summary_df.data_size * \
+        1000 / 150
     data_summary_df.loc[:, 'reads_len'] = 'PE150'
     data_summary_df.to_csv(qc_summary_file, sep='\t',
                            index=False, float_format='%.2f',
                            columns=QC_DATA_SUMMARY_HEADER)
+
+    # generate gc plot data & plot
+    gc_files = [os.path.join(gc_dir, '{each}.gc.txt'.format(each=each))
+                for each in data_summary_df.sample_id]
+    map(generate_fake_gc_file, gc_files)
+    envoy.run('Rscript {gc_r} --gc_dir {gc_dir}'.format(
+        gc_r=GC_PLOT_R, gc_dir=gc_dir
+    ))
+
+    # generate reads quality data & plot
+    rq_files = [os.path.join(rq_dir, '{each}.reads_quality.txt'.format(
+        each=each
+    )) for each in data_summary_df.sample_id]
+    map(generate_fake_rq_file, rq_files)
+    envoy.run('Rscript {rq_r} {rq_dir}'.format(
+        rq_r=RQ_PLOT_R, rq_dir=rq_dir
+    ))
 
 
 if __name__ == '__main__':
