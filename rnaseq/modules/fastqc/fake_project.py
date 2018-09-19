@@ -29,6 +29,16 @@ QC_DATA_SUMMARY_HEADER = [
     'gc'
 ]
 
+QC_DATA_OUT_HEADER = [
+    'Sample_ID',
+    'Reads_Number(M)',
+    'Reads_Length',
+    'Data_Size(G)',
+    'Q30(%)',
+    'GC(%)'
+]
+
+
 Q30_LOWER = 95
 Q30_UPPER = 97
 GC_LOWER = 45
@@ -43,7 +53,7 @@ def generate_sample_prefix(letter_num=3):
 
 
 def generate_sample_name(abbr, num):
-    return ['{abbr}_{n:0>4d}'.format(abbr=abbr, n=n+1)
+    return ['{abbr}_{n:0>4d}'.format(abbr=abbr, n=n + 1)
             for n in range(num)]
 
 
@@ -71,8 +81,8 @@ def generate_fake_gc_file(outfile, offset=0.1):
 def generate_fake_rq_file(outfile, offset=0.05):
     example_df = pd.read_table(READS_QUAL_TEST_DATA)
     offset_series = Series(
-        generate_sample_data(1-offset,
-                             1+offset,
+        generate_sample_data(1 - offset,
+                             1 + offset,
                              len(example_df))
     )
     example_df.loc[:, 'Proportion'] = example_df.Proportion * \
@@ -142,9 +152,6 @@ def main(proj_dir, name_abbr, sample_num, data_size):
     data_summary_df.loc[:, 'reads_num'] = data_summary_df.data_size * \
         1000 / 150
     data_summary_df.loc[:, 'reads_len'] = 'PE150'
-    data_summary_df.to_csv(qc_summary_file, sep='\t',
-                           index=False, float_format='%.2f',
-                           columns=QC_DATA_SUMMARY_HEADER)
 
     # generate gc plot data & plot
     gc_files = [os.path.join(gc_dir, '{each}.gc.txt'.format(each=each))
@@ -162,6 +169,11 @@ def main(proj_dir, name_abbr, sample_num, data_size):
     envoy.run('Rscript {rq_r} {rq_dir}'.format(
         rq_r=RQ_PLOT_R, rq_dir=rq_dir
     ))
+
+    data_summary_df = data_summary_df.loc[:, QC_DATA_SUMMARY_HEADER]
+    data_summary_df.columns = QC_DATA_OUT_HEADER
+    data_summary_df.to_csv(qc_summary_file, sep='\t',
+                           index=False, float_format='%.2f')
 
 
 if __name__ == '__main__':
