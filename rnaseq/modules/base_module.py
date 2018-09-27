@@ -5,13 +5,12 @@ import os
 from rnaseq.utils import config
 import envoy
 from rnaseq.utils.util_functions import rsync_pattern_to_file
-from rnaseq.utils.util_functions import write_obj_to_file
+from rnaseq.utils.util_functions import write_obj_to_file, save_mkdir
 
 
 class prepare(luigi.Task):
 
     proj_dir = luigi.Parameter()
-    _module = 'test'
 
     def run(self):
         prepare_dir_log_list = []
@@ -37,7 +36,6 @@ class prepare(luigi.Task):
 class simple_task(luigi.Task):
 
     _tag = 'analysis'
-    _module = 'test'
     proj_dir = luigi.Parameter()
     _R = config.module_software['Rscript']
 
@@ -83,7 +81,6 @@ class collection_task(luigi.Task):
     .ignore: files not needed in analysis results
     .report_files: files needed for generate report
     '''
-    _module = 'test'
     proj_dir = luigi.Parameter()
 
     def run_prepare(self):
@@ -113,12 +110,22 @@ class collection_task(luigi.Task):
 class cp_analysis_result(simple_task):
 
     _tag = 'cp_results'
-    _module = 'test'
     proj_dir = luigi.Parameter()
 
+    def mk_result_dir(self):
+        result_dir = os.path.join(self.proj_dir,
+                                  self.proj_name,
+                                  self.result_dir)
+        report_dir = os.path.join(self.proj_dir,
+                                  self.proj_name,
+                                  self.report_data)
+        map(save_mkdir, [result_dir, report_dir])
+
     def run(self):
+        self.mk_result_dir()
         _run_cmd = config.module_cmd[self._tag].format(
             t=self)
         _process = envoy.run(_run_cmd)
         with self.output().open('w') as simple_task_log:
             simple_task_log.write(_process.std_err)
+            # simple_task_log.write('test')

@@ -6,9 +6,8 @@ import os
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import txt_to_excel
 from rnaseq.utils.util_functions import get_compare_names
-from rnaseq.modules.base_module import prepare
-from rnaseq.modules.base_module import simple_task
-from rnaseq.modules.base_module import collection_task
+from rnaseq.modules.base_module import prepare, simple_task
+from rnaseq.modules.base_module import collection_task, cp_analysis_result
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
@@ -20,8 +19,11 @@ VENN_PLOT = os.path.join(script_dir, 'venn_plot.py')
 DIFF_SEQ = os.path.join(script_dir, 'extract_diff_gene_seq.py')
 
 
-class quant_prepare_dir(prepare):
+class Pubvar:
     _module = MODULE
+
+
+class quant_prepare_dir(prepare, Pubvar):
     clean_dir = luigi.Parameter()
     tr_index = luigi.Parameter()
     qvalue = luigi.Parameter(default='0.05')
@@ -29,12 +31,11 @@ class quant_prepare_dir(prepare):
 
 
 @requires(quant_prepare_dir)
-class run_kallisto(simple_task):
+class run_kallisto(simple_task, Pubvar):
     '''
     quantification using kallisto
     '''
 
-    _module = MODULE
     sample = luigi.Parameter()
     _kallisto = config.module_software['kallisto']
     kallisto_dir = config.module_dir[MODULE]['kallisto']
@@ -45,14 +46,13 @@ class run_kallisto(simple_task):
 
 
 @inherits(quant_prepare_dir)
-class kallisto_to_matrix(simple_task):
+class kallisto_to_matrix(simple_task, Pubvar):
     '''
     generate gene expression matrix from kallisto quantification results
     '''
 
     sample_inf = luigi.Parameter()
     gene2tr = luigi.Parameter()
-    _module = MODULE
     _kallisto_to_table_r = KALLISTO_TO_TABLE
     kallisto_dir = config.module_dir[MODULE]['kallisto']
     exp_dir = config.module_dir[MODULE]['exp']
@@ -68,12 +68,11 @@ class kallisto_to_matrix(simple_task):
 
 
 @requires(kallisto_to_matrix)
-class run_diff(simple_task):
+class run_diff(simple_task, Pubvar):
     '''
     run diff analysis for each compare
     '''
     compare = luigi.Parameter()
-    _module = MODULE
     _diff_analysis_r = DIFF_ANALYSIS
     kallisto_dir = config.module_dir[MODULE]['kallisto']
     exp_dir = config.module_dir[MODULE]['exp']
@@ -88,10 +87,9 @@ class run_diff(simple_task):
 
 
 @inherits(kallisto_to_matrix)
-class get_excel_table(simple_task):
+class get_excel_table(simple_task, Pubvar):
 
-    _module = MODULE
-    contrasts = luigi.Parameter(default='')
+    contrasts = luigi.Parameter(default='None')
 
     def requires(self):
         compare_name_list = get_compare_names(self.contrasts, self.sample_inf)
@@ -116,9 +114,8 @@ class get_excel_table(simple_task):
 
 
 @requires(get_excel_table)
-class venn_plot(simple_task):
+class venn_plot(simple_task, Pubvar):
 
-    _module = MODULE
     contrasts = luigi.Parameter(default='')
     _plot_venn_py = VENN_PLOT
     exp_dir = config.module_dir[MODULE]['exp']
@@ -131,20 +128,27 @@ class venn_plot(simple_task):
 
 
 @requires(venn_plot)
-class quant_report_data(simple_task):
+class quant_report_data(simple_task, Pubvar):
     '''
     generate table and plots for report
     '''
 
-    _module = MODULE
     _quant_report_r = QUANT_REPORT
     exp_dir = config.module_dir[MODULE]['exp']
     diff_dir = config.module_dir[MODULE]['diff']
 
 
 @requires(quant_report_data)
-class quant_collection(collection_task):
-    _module = MODULE
+class quant_collection(collection_task, Pubvar):
+    pass
+
+
+@requires(quant_collection)
+class quant_results(cp_analysis_result, Pubvar):
+    proj_name = luigi.Parameter()
+    main_dir = config.module_dir[Pubvar._module]['main']
+    result_dir = config.module_dir['result']['result']
+    report_data = config.module_dir['result']['report_data']
 
 
 if __name__ == '__main__':

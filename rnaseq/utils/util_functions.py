@@ -265,7 +265,7 @@ def save_mkdir(path):
 
 
 def get_compare_names(contrasts, sample_inf):
-    if not contrasts:
+    if contrasts == 'None':
         group_sample_df = pd.read_table(
             sample_inf, header=None, index_col=0)
         compare_list = itertools.combinations(

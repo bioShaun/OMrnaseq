@@ -62,11 +62,11 @@ class run_kobas(simple_task):
         return self.name
 
 
-@requires(run_kobas)
-class run_pathway(run_kobas):
+# @requires(run_kobas)
+# class run_pathway(run_kobas):
 
-    _module = MODULE
-    _pathway_py = KEGG_PATHWAY_PY
+#     _module = MODULE
+#     _pathway_py = KEGG_PATHWAY_PY
 
 
 @inherits(q_enrich_prepare_dir)
@@ -96,11 +96,11 @@ class q_enrich_collection(collection_task):
                            sp=self.sp, proj_dir=self.proj_dir,
                            name=gene_files_df.name[each],
                            genes=gene_files_df.path[each]),
-                 run_pathway(go=self.go, topgo=self.topgo, kegg_bg=self.kegg_bg,
-                             gene_length=self.gene_length, kegg=self.kegg,
-                             sp=self.sp, proj_dir=self.proj_dir,
-                             name=gene_files_df.name[each],
-                             genes=gene_files_df.path[each])
+                 run_kobas(go=self.go, topgo=self.topgo, kegg_bg=self.kegg_bg,
+                           gene_length=self.gene_length, kegg=self.kegg,
+                           sp=self.sp, proj_dir=self.proj_dir,
+                           name=gene_files_df.name[each],
+                           genes=gene_files_df.path[each])
                  ) for each in gene_files_df.index]
 
 

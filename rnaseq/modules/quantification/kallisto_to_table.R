@@ -88,14 +88,16 @@ write.table(out_gene_tpm_matrix, file = paste(expression_stat_dir, 'Gene.tpm.txt
 write.table(out_tx_cts, file = paste(expression_stat_dir, 'Transcript.count.txt', sep = '/'), quote=F, row.names = F, sep = '\t')
 write.table(out_tx_tpm_matrix, file = paste(expression_stat_dir, 'Transcript.tpm.txt', sep = '/'), quote = F, row.names = F, sep = '\t')
 
+exp_gene_tpm_matrix <- gene_tpm_matrix[rowSums(gene_tpm_matrix) > 0, ]
+
 ## boxplot
-om_boxplot(plot_data = gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
+om_boxplot(plot_data = exp_gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
 
 ## PCA plot
-om_pca_plot(plot_data = gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
+om_pca_plot(plot_data = exp_gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
 
 ## sample correlation
-om_correlation_plot(plot_data = cts, samples = samples, outdir = expression_stat_dir)
+om_correlation_plot(plot_data = exp_gene_tpm_matrix, samples = samples, outdir = expression_stat_dir)
 
 pdf_example_tpm_df <- out_gene_tpm_matrix[1:100, 1:5]
 write.table(pdf_example_tpm_df, file = paste(expression_stat_dir, 'pdf.example.Gene.tpm.txt', sep = '/'), quote = F, row.names = F, sep = '\t')
