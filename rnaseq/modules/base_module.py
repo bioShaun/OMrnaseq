@@ -122,7 +122,8 @@ class cp_analysis_result(simple_task):
         map(save_mkdir, [result_dir, report_dir])
 
     def run(self):
-        self.mk_result_dir()
+        if self.result_dir is not None:
+            self.mk_result_dir()
         _run_cmd = config.module_cmd[self._tag].format(
             t=self)
         _process = envoy.run(_run_cmd)

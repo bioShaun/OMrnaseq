@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+
+import click
+import os
+import sys
+from rnaseq.utils import config
+from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
+from rnaseq.utils.util_functions import MutuallyExclusiveOption
+from rnaseq.utils.util_functions import pipe_default_para
+from rnaseq.utils.util_functions import check_data
+
+
+CURRENT_DIR = os.getcwd()
+DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
+DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
+DEFAULT_WORKER, DEFAULT_SP = pipe_default_para(CURRENT_DIR)
+
+
+class RunPipe(object):
+
+    def __init__(self, proj_dir, sample_inf, fq_dir, workers, latin_name,
+                 kegg_bg, database, database_version, module, re_run=None,
+                 contrasts=''):
+        self.proj_dir = proj_dir
+        self.sample_inf = sample_inf
+        self.fq_dir = fq_dir
+        self.workers = workers
+        self.latin_name = latin_name
+        self.database = database
+        self.database_version = database_version
+        self.kegg_bg = kegg_bg
+        self.module = module
+        self.re_run = re_run
+        self.contrasts = contrasts
+
+    @property
+    def clean(self):
+        re_run_list = []
+        if self.re_run:
+            re_run_modules = self.re_run.split(',')
+            for each_re_run in re_run_modules:
+                each_module = each_re_run.split(':')[0]
+                try:
+                    each_task = each_re_run.split(':')[1]
+                except IndexError:
+                    each_task = 'all'
+                clean_logs(self.proj_dir, each_module, each_task)
+                re_run_list.append(each_module)
+            self.module = ','.join(re_run_list)
+
+    @property
+    def run(self):
+        pipe_cmd = config.pipe_cmd.format(t=self)
+        nohuprun_cmd(pipe_cmd)
+
+
+@click.command()
+@click.option('-p', '--proj_dir',
+              type=click.Path(exists=True), default=CURRENT_DIR,
+              help='project analysis directory, default is current dir.')
+@click.option('-s', '--sample_inf',
+              type=click.Path(exists=True), default=DEFAULT_SAMPLE_INI,
+              help='group vs sample file, default is "sample.ini"\
+              in current directory.')
+@click.option('-c', '--contrasts',
+              type=click.Path(dir_okay=False),
+              default='None',
+              help='Differential analysis contrasts file.')
+@click.option('-f', '--fq_dir',
+              type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
+              help='directory place analysis fq files, \
+              default is "cleandata" in current dir.')
+@click.option('-w', '--workers', default=DEFAULT_WORKER,
+              type=int, help='paralle number.')
+@click.option('-l', '--latin_name', type=str, default=DEFAULT_SP,
+              help='species latin name.')
+@click.option('-k', '--kegg_bg', default='none',
+              help='kegg analysis backgroud, default is the \
+              analysis species, if using KO database for \
+              kegg enrichment annotation, the parameter is required.')
+@click.option('-d', '--database', default='ensembl',
+              help='species database.')
+@click.option('-dv', '--database_version', default='current',
+              help='species database version.')
+@click.option('-m', '--module', type=str, default='pipe',
+              cls=MutuallyExclusiveOption, mutually_exclusive=["re_run"],
+              help='modules to run, seperated with ",", \
+              default is the whole pipeline.')
+@click.option('-r', '--re_run', type=str, default='',
+              cls=MutuallyExclusiveOption, mutually_exclusive=["module"],
+              help='re-run parts of modules, seperated with ",".')
+def main(proj_dir, sample_inf, fq_dir, database, database_version,
+         workers, latin_name, module, re_run, kegg_bg, contrasts):
+    if check_data(sample_inf, fq_dir):
+        sys.exit('file check failed.')
+    else:
+        print 'passed file check.'
+    if not workers:
+        sys.exit('worker number must be specified!')
+    else:
+        if not latin_name:
+            sys.exit('species latin name must be specified!')
+    my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
+                      kegg_bg, database, database_version, module, re_run,
+                      contrasts)
+    my_pipe.module = module
+    my_pipe.re_run = re_run
+    my_pipe.clean
+    my_pipe.run
+
+
+if __name__ == '__main__':
+    main()

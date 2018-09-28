@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import luigi
 import click
 import os
 import sys
@@ -8,106 +9,298 @@ from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
 from rnaseq.utils.util_functions import MutuallyExclusiveOption
 from rnaseq.utils.util_functions import pipe_default_para
 from rnaseq.utils.util_functions import check_data
+from rnaseq.modules.fastqc import fastqc
+from rnaseq.modules.quantification import quant
+from rnaseq.modules.mapping import star_mapping
+from rnaseq.modules.enrichment import enrich, quick_enrich
+import itertools
 
 
 CURRENT_DIR = os.getcwd()
 DEFAULT_SAMPLE_INI = os.path.join(CURRENT_DIR, 'sample.ini')
 DEFAULT_FQ_DIR = os.path.join(CURRENT_DIR, 'cleandata')
-DEFAULT_WORKER, DEFAULT_SP = pipe_default_para(CURRENT_DIR)
 
 
-class RunPipe(object):
-
-    def __init__(self, proj_dir, sample_inf, fq_dir, workers, latin_name,
-                 kegg_bg, database, database_version, module, re_run=None,
-                 contrasts=''):
-        self.proj_dir = proj_dir
-        self.sample_inf = sample_inf
-        self.fq_dir = fq_dir
-        self.workers = workers
-        self.latin_name = latin_name
-        self.database = database
-        self.database_version = database_version
-        self.kegg_bg = kegg_bg
-        self.module = module
-        self.re_run = re_run
-        self.contrasts = contrasts
-
-    @property
-    def clean(self):
-        re_run_list = []
-        if self.re_run:
-            re_run_modules = self.re_run.split(',')
-            for each_re_run in re_run_modules:
-                each_module = each_re_run.split(':')[0]
-                try:
-                    each_task = each_re_run.split(':')[1]
-                except IndexError:
-                    each_task = 'all'
-                clean_logs(self.proj_dir, each_module, each_task)
-                re_run_list.append(each_module)
-            self.module = ','.join(re_run_list)
-
-    @property
-    def run(self):
-        pipe_cmd = config.pipe_cmd.format(t=self)
-        nohuprun_cmd(pipe_cmd)
+MODULE_PARAMS = {
+    'fastqc': (),
+    'quant': ('kallisto_idx', 'gene2tr'),
+    'mapping': ('star_index',),
+    'pipe_enrich': ('go', 'topgo', 'gene_length',
+                    'kegg_blast', 'kegg_abbr'),
+    'enrich': ('go', 'topgo', 'gene_length',
+               'kegg_blast', 'kegg_abbr', 'gene_list_file')
+}
 
 
-@click.command()
-@click.option('-p', '--proj_dir',
-              type=click.Path(exists=True), default=CURRENT_DIR,
-              help='project analysis directory, default is current dir.')
-@click.option('-s', '--sample_inf',
-              type=click.Path(exists=True), default=DEFAULT_SAMPLE_INI,
-              help='group vs sample file, default is "sample.ini"\
-              in current directory.')
-@click.option('-c', '--contrasts',
+def check_params(ctx, module):
+    missing_params = []
+    for each in MODULE_PARAMS[module]:
+        if ctx.obj[each] is None:
+            missing_params.append(each)
+    return missing_params
+
+
+def load_module(ctx):
+    # define modules
+    fastqc_missing_params = check_params(ctx, 'fastqc')
+    if fastqc_missing_params:
+        fastqc_module = fastqc_missing_params
+    else:
+        fastqc_module = fastqc.fastqc_results(
+            proj_name=ctx.obj['proj_name'],
+            clean_dir=ctx.obj['fq_dir'],
+            sample_inf=ctx.obj['sample_inf'],
+            proj_dir=ctx.obj['proj_dir'])
+
+    quant_missing_params = check_params(ctx, 'quant')
+    if quant_missing_params:
+        quant_module = quant_missing_params
+    else:
+        quant_module = quant.quant_results(
+            clean_dir=ctx.obj['fq_dir'],
+            proj_name=ctx.obj['proj_name'],
+            sample_inf=ctx.obj['sample_inf'],
+            proj_dir=ctx.obj['proj_dir'],
+            tr_index=ctx.obj['kallisto_idx'],
+            gene2tr=ctx.obj['gene2tr'],
+            contrasts=ctx.obj['contrasts']
+        )
+
+    mapping_missing_params = check_params(ctx, 'mapping')
+    if mapping_missing_params:
+        mapping_module = mapping_missing_params
+    else:
+        mapping_module = star_mapping.star_mapping_results(
+            proj_name=ctx.obj['proj_name'],
+            proj_dir=ctx.obj['proj_dir'],
+            clean_dir=ctx.obj['fq_dir'],
+            sample_inf=ctx.obj['sample_inf'],
+            star_index=ctx.obj['star_index'],
+        )
+
+    pipe_enrich_missing_params = check_params(ctx, 'pipe_enrich')
+    if pipe_enrich_missing_params:
+        pipe_enrich_module = pipe_enrich_missing_params
+    else:
+        pipe_enrich_module = enrich.enrich_results(
+            proj_dir=ctx.obj['proj_dir'],
+            proj_name=ctx.obj['proj_name'],
+            go=ctx.obj['go'],
+            topgo=ctx.obj['topgo'],
+            gene_length=ctx.obj['gene_length'],
+            kegg=ctx.obj['kegg_blast'],
+            sp=ctx.obj['kegg_abbr'],
+            kegg_bg=ctx.obj['kegg_backgroud']
+        )
+
+    enrich_missing_params = check_params(ctx, 'enrich')
+    if enrich_missing_params:
+        enrich_module = enrich_missing_params
+    else:
+        enrich_module = quick_enrich.q_enrich_result(
+            proj_dir=ctx.obj['proj_dir'],
+            proj_name=ctx.obj['proj_name'],
+            go=ctx.obj['go'],
+            topgo=ctx.obj['topgo'],
+            gene_length=ctx.obj['gene_length'],
+            kegg=ctx.obj['kegg_blast'],
+            sp=ctx.obj['kegg_abbr'],
+            kegg_bg=ctx.obj['kegg_backgroud'],
+            gene_files=ctx.obj['gene_list_file']
+        )
+
+    # map modules to name
+    module_dict = {
+        'fastqc': [fastqc_module],
+        'quant': [quant_module],
+        'mapping': [mapping_module],
+        'pipe_enrich': [pipe_enrich_module],
+        'enrich': [enrich_module],
+    }
+
+    return module_dict
+
+
+def launch_module(ctx, module_name):
+    module_obj = ctx.obj['MODULE_DICT'][module_name]
+    out_obj = []
+    for each in module_obj:
+        if isinstance(each, list):
+            param_list = ['--{each}'.format(each=each)
+                          for each in each]
+            param_str = ','.join(param_list)
+            out_obj.append('{mp} is needed for module {mn}'.format(
+                mp=param_str, mn=module_name
+            ))
+        else:
+            out_obj.append(each)
+    return out_obj
+
+
+@click.group(chain=True)
+@click.option('-p',
+              '--proj_dir',
+              type=click.Path(exists=True),
+              default=CURRENT_DIR,
+              help='Project analysis directory.                 \
+              DEFAULT: current dir.')
+@click.option('-n',
+              '--proj_name',
+              type=click.STRING,
+              default='results',
+              help='Project name.                     \
+              DEFAULT: "results".')
+@click.option('-s',
+              '--sample_inf',
+              type=click.Path(exists=True),
+              default=DEFAULT_SAMPLE_INI,
+              help='Group vs Sample file.                       \
+              DEFAULT: "sample.ini" in current directory.')
+@click.option('-w',
+              '--workers',
+              default=4,
+              type=int,
+              help='Paralle number.                    \
+              DEFAULT: 4.')
+@click.option('-f',
+              '--fq_dir',
+              type=click.Path(exists=True),
+              help='Directory place analysis fq files. \
+              DEFAULT: "cleandata" in current dir.',
+              default=DEFAULT_FQ_DIR)
+@click.option('--gene2tr',
+              type=click.Path(exists=True, dir_okay=False),
+              help='Transcript_id <-> Gene_id map file.\
+              REQUIED for [quant] module.',
+              default=None)
+@click.option('--kallisto_idx',
+              type=click.Path(exists=True, dir_okay=False),
+              help='Kallisto index for quantification.\
+              REQUIED for [quant] module.')
+@click.option('--contrasts',
               type=click.Path(dir_okay=False),
-              default='None',
-              help='Differential analysis contrasts file.')
-@click.option('-f', '--fq_dir',
-              type=click.Path(exists=True), default=DEFAULT_FQ_DIR,
-              help='directory place analysis fq files, \
-              default is "cleandata" in current dir.')
-@click.option('-w', '--workers', default=DEFAULT_WORKER,
-              type=int, help='paralle number.')
-@click.option('-l', '--latin_name', type=str, default=DEFAULT_SP,
-              help='species latin name.')
-@click.option('-k', '--kegg_bg', default='none',
-              help='kegg analysis backgroud, default is the \
-              analysis species, if using KO database for \
-              kegg enrichment annotation, the parameter is required.')
-@click.option('-d', '--database', default='ensembl',
-              help='species database.')
-@click.option('-dv', '--database_version', default='current',
-              help='species database version.')
-@click.option('-m', '--module', type=str, default='pipe',
-              cls=MutuallyExclusiveOption, mutually_exclusive=["re_run"],
-              help='modules to run, seperated with ",", \
-              default is the whole pipeline.')
-@click.option('-r', '--re_run', type=str, default='',
-              cls=MutuallyExclusiveOption, mutually_exclusive=["module"],
-              help='re-run parts of modules, seperated with ",".')
-def main(proj_dir, sample_inf, fq_dir, database, database_version,
-         workers, latin_name, module, re_run, kegg_bg, contrasts):
-    if check_data(sample_inf, fq_dir):
-        sys.exit('file check failed.')
+              help='Compare list to perform diff analysis. \
+              DEFAULT: "None".',
+              default='None')
+@click.option('--star_index',
+              type=click.Path(file_okay=False),
+              help='STAR index directory.               \
+              REQUIED for [mapping] module.',
+              default=None)
+@click.option('--go',
+              type=click.Path(dir_okay=False),
+              help='GO annotation for goseq analysis.\
+              REQUIED for [pipe_enrich, enrich] module.',
+              default=None)
+@click.option('--topgo',
+              type=click.Path(dir_okay=False),
+              help='GO annotation for TopGO analysis.\
+              REQUIED for [pipe_enrich, enrich] module.',
+              default=None)
+@click.option('--gene_length',
+              type=click.Path(dir_okay=False),
+              help='Gene length file for goseq analysis.\
+              REQUIED for [pipe_enrich, enrich] module.',
+              default=None)
+@click.option('--kegg_blast',
+              type=click.Path(dir_okay=False),
+              help='KEGG blast annotation for KEGG analysis.\
+              REQUIED for [pipe_enrich, enrich] module.',
+              default=None)
+@click.option('--kegg_abbr',
+              type=click.STRING,
+              help='KEGG abbr for KEGG analysis.      \
+              REQUIED for [pipe_enrich, enrich] module.',
+              default=None)
+@click.option('--kegg_backgroud',
+              type=click.STRING,
+              help='KEGG backgroud species abbr for KEGG analysis.\
+              DEFAULT: kegg_abbr.',
+              default=None)
+@click.option('--gene_list_file',
+              type=click.Path(dir_okay=False),
+              help='gene list file for analysis.            \
+              REQUIED for [enrich] module.',
+              default=None)
+@click.pass_context
+def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
+        gene2tr, kallisto_idx, contrasts, proj_name,
+        star_index, go, topgo, gene_length, kegg_blast,
+        kegg_abbr, kegg_backgroud, gene_list_file):
+    ctx.obj['proj_dir'] = proj_dir
+    ctx.obj['proj_name'] = proj_name
+    ctx.obj['sample_inf'] = sample_inf
+    ctx.obj['fq_dir'] = fq_dir
+    ctx.obj['workers'] = workers
+    ctx.obj['gene2tr'] = gene2tr
+    ctx.obj['kallisto_idx'] = kallisto_idx
+    ctx.obj['contrasts'] = contrasts
+    ctx.obj['star_index'] = star_index
+    ctx.obj['go'] = go
+    ctx.obj['topgo'] = topgo
+    ctx.obj['gene_length'] = gene_length
+    ctx.obj['kegg_blast'] = kegg_blast
+    ctx.obj['kegg_abbr'] = kegg_abbr
+    ctx.obj['gene_list_file'] = gene_list_file
+    if kegg_backgroud is None:
+        ctx.obj['kegg_backgroud'] = kegg_abbr
     else:
-        print 'passed file check.'
-    if not workers:
-        sys.exit('worker number must be specified!')
+        ctx.obj['kegg_backgroud'] = kegg_backgroud
+    ctx.obj['MODULE_DICT'] = load_module(ctx)
+
+
+@cli.resultcallback()
+def process_pipeline(modules, proj_dir, sample_inf,
+                     fq_dir, workers, gene2tr,
+                     kallisto_idx, contrasts, proj_name,
+                     star_index, go, topgo, gene_length, kegg_blast,
+                     kegg_abbr, kegg_backgroud, gene_list_file):
+    module_list = []
+    param_list = []
+    for each in itertools.chain.from_iterable(modules):
+        if isinstance(each, str):
+            param_list.append(each)
+        else:
+            module_list.append(each)
+    if param_list:
+        click.secho('=' * 60)
+        for each_param in param_list:
+            click.secho(each_param)
+        click.secho('=' * 60)
+        sys.exit('Paramters needed!')
     else:
-        if not latin_name:
-            sys.exit('species latin name must be specified!')
-    my_pipe = RunPipe(proj_dir, sample_inf, fq_dir, workers, latin_name,
-                      kegg_bg, database, database_version, module, re_run,
-                      contrasts)
-    my_pipe.module = module
-    my_pipe.re_run = re_run
-    my_pipe.clean
-    my_pipe.run
+        return luigi.build(module_list, workers=workers)
+
+
+@cli.command('fastqc')
+@click.pass_context
+def qc(ctx):
+    return launch_module(ctx, 'fastqc')
+
+
+@cli.command('quant')
+@click.pass_context
+def quantification(ctx):
+    return launch_module(ctx, 'quant')
+
+
+@cli.command('mapping')
+@click.pass_context
+def mapping(ctx):
+    return launch_module(ctx, 'mapping')
+
+
+@cli.command('pipe_enrich')
+@click.pass_context
+def mapping(ctx):
+    return launch_module(ctx, 'pipe_enrich')
+
+
+@cli.command('enrich')
+@click.pass_context
+def mapping(ctx):
+    return launch_module(ctx, 'enrich')
 
 
 if __name__ == '__main__':
-    main()
+    cli(obj={})

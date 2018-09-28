@@ -295,7 +295,7 @@ module_cmd:
                       --copy-links
                       --exclude-from={t.proj_dir}/{t.main_dir}/.ignore
                       {t.proj_dir}/{t.main_dir}/
-                      {t.proj_dir}/{t.result_dir}'
+                      {t.proj_dir}/{t.proj_name}'
   cp_results: 'rsync
                -av
                --copy-links
