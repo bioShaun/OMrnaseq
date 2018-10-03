@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import luigi
 from luigi.util import requires, inherits
 import os
@@ -108,7 +109,11 @@ class get_excel_table(simple_task, Pubvar):
             for each_file in filenames:
                 if each_file.endswith('.txt'):
                     each_file_path = os.path.join(dirpath, each_file)
-                    txt_to_excel(each_file_path)
+                    try:
+                        txt_to_excel(each_file_path)
+                    except:
+                        print(each_file_path)
+                        sys.exit(1)
         with self.output().open('w') as get_excel_table_log:
             get_excel_table_log.write('txt to excel finished')
 
