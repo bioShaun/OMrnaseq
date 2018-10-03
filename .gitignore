@@ -119,3 +119,6 @@ database.yaml
 # png and xml
 *xml
 *png
+
+# pycharm
+.idea

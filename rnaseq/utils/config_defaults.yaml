@@ -372,6 +372,7 @@ module_file:
       - 'expression_summary/pdf.*'
       - 'expression_summary/html.*'
       - 'expression_summary/ALL.Volcano_plot.p*'
+      - 'expression_summary/Transcript.*'
     pdf_files:
       - 'expression_summary/*.png'
       - 'differential_analysis/*/*png'
@@ -381,9 +382,15 @@ module_file:
     excel_files:
       - 'differential_analysis/*/*.edgeR.DE_results.txt'
       - 'expression_summary/Gene.*.txt'
-      - 'expression_summary/Transcript.*.txt'
       - 'expression_summary/Sample.correlation.stat.txt'
       - 'expression_summary/Diff.gene.*.txt'
+      - 'differential_analysis/*/*.edgeR.DE_results.anno.txt'
+    anno_files:
+      - 'differential_analysis/*/*.edgeR.DE_results.txt'
+      - 'expression_summary/Gene.count.txt'
+      - 'expression_summary/Gene.tpm.txt'
+      - 'expression_summary/Diff.gene.count.txt'
+      - 'expression_summary/Diff.gene.tpm.txt'
   enrich:
     ignore_files:
       - '.ignore'

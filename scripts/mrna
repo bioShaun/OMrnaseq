@@ -64,7 +64,8 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             tr_index=ctx.obj['kallisto_idx'],
             gene2tr=ctx.obj['gene2tr'],
-            contrasts=ctx.obj['contrasts']
+            contrasts=ctx.obj['contrasts'],
+            gene_anno=ctx.obj['gene_anno']
         )
 
     mapping_missing_params = check_params(ctx, 'mapping')
@@ -223,11 +224,17 @@ def launch_module(ctx, module_name):
               help='gene list file for analysis.            \
               REQUIED for [enrich] module.',
               default=None)
+@click.option('--gene_anno',
+              type=click.Path(dir_okay=False),
+              help='gene annotation file for expression table.            \
+              SUGGESTED for [quant] module.',
+              default='')
 @click.pass_context
 def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
         gene2tr, kallisto_idx, contrasts, proj_name,
         star_index, go, topgo, gene_length, kegg_blast,
-        kegg_abbr, kegg_background, gene_list_file):
+        kegg_abbr, kegg_background, gene_list_file,
+        gene_anno):
     ctx.obj['proj_dir'] = proj_dir
     ctx.obj['proj_name'] = proj_name
     ctx.obj['sample_inf'] = sample_inf
@@ -243,6 +250,7 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
     ctx.obj['kegg_blast'] = kegg_blast
     ctx.obj['kegg_abbr'] = kegg_abbr
     ctx.obj['gene_list_file'] = gene_list_file
+    ctx.obj['gene_anno'] = gene_anno
     if kegg_background is None:
         ctx.obj['kegg_background'] = kegg_abbr
     else:
@@ -255,7 +263,8 @@ def process_pipeline(modules, proj_dir, sample_inf,
                      fq_dir, workers, gene2tr,
                      kallisto_idx, contrasts, proj_name,
                      star_index, go, topgo, gene_length, kegg_blast,
-                     kegg_abbr, kegg_background, gene_list_file):
+                     kegg_abbr, kegg_background, gene_list_file,
+                     gene_anno):
     module_list = []
     param_list = []
     for each in itertools.chain.from_iterable(modules):
