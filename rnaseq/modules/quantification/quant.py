@@ -6,7 +6,7 @@ import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
-from rnaseq.utils.util_functions import txt_to_excel
+from rnaseq.utils.util_functions import txt_to_excel, add_gene_annotation
 from rnaseq.utils.util_functions import get_compare_names, pattern2files
 from rnaseq.modules.base_module import prepare, simple_task
 from rnaseq.modules.base_module import collection_task, cp_analysis_result
@@ -128,10 +128,21 @@ class quant_report_data(simple_task, Pubvar):
 @requires(quant_report_data)
 class get_excel_table(simple_task, Pubvar):
     # TODO accelarate
+
+    gene_anno = luigi.Parameter(default='')
+
     def run(self):
         main_dir = os.path.join(
             self.proj_dir, config.module_dir[MODULE]['main']
         )
+        # add annotation
+        if self.gene_anno:
+            files_to_anno = [os.path.join(main_dir, each) for each
+                             in config.module_file[MODULE]['anno_files']]
+            for each_files in pattern2files(files_to_anno):
+                for each_file in each_files:
+                    add_gene_annotation(each_file, self.gene_anno)
+        # txt to excel
         excel_file_patterns = [os.path.join(main_dir, each) for each
                                in config.module_file[MODULE]['excel_files']]
         for each_files in pattern2files(excel_file_patterns):
