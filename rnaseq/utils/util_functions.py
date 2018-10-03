@@ -303,3 +303,9 @@ def check_data(sample_inf, fq_dir):
         return failed_fq
     failed_fqs = map(check_fq, sample_df.sample_id)
     return [item for sublist in failed_fqs for item in sublist]
+
+
+def pattern2files(file_patterns):
+    for each_pattern in file_patterns:
+        each_files = glob.glob(each_pattern)
+        yield each_files
