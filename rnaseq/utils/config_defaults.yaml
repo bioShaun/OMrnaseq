@@ -378,6 +378,12 @@ module_file:
       - 'expression_summary/*Gene.tpm.txt'
       - 'expression_summary/*example.diff.table.txt'
       - 'differential_analysis/*/*.edgeR.DE_results.txt'
+    excel_files:
+      - 'differential_analysis/*/*.edgeR.DE_results.txt'
+      - 'expression_summary/Gene.*.txt'
+      - 'expression_summary/Transcript.*.txt'
+      - 'expression_summary/Sample.correlation.stat.txt'
+      - 'expression_summary/Diff.gene.*.txt'
   enrich:
     ignore_files:
       - '.ignore'

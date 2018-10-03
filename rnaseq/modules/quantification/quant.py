@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import sys
 import luigi
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import txt_to_excel
-from rnaseq.utils.util_functions import get_compare_names
+from rnaseq.utils.util_functions import get_compare_names, pattern2files
 from rnaseq.modules.base_module import prepare, simple_task
 from rnaseq.modules.base_module import collection_task, cp_analysis_result
+from pandas.errors import EmptyDataError
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
@@ -88,7 +90,7 @@ class run_diff(simple_task, Pubvar):
 
 
 @inherits(kallisto_to_matrix)
-class get_excel_table(simple_task, Pubvar):
+class venn_plot(simple_task, Pubvar):
 
     contrasts = luigi.Parameter(default='None')
 
@@ -100,26 +102,6 @@ class get_excel_table(simple_task, Pubvar):
                          qvalue=self.qvalue, logfc=self.logfc,
                          sample_inf=self.sample_inf, gene2tr=self.gene2tr)
                 for each_compare in compare_name_list]
-
-    def run(self):
-        main_dir = os.path.join(
-            self.proj_dir, config.module_dir[MODULE]['main']
-        )
-        for dirpath, dirnames, filenames in os.walk(main_dir):
-            for each_file in filenames:
-                if each_file.endswith('.txt'):
-                    each_file_path = os.path.join(dirpath, each_file)
-                    try:
-                        txt_to_excel(each_file_path)
-                    except:
-                        print(each_file_path)
-                        sys.exit(1)
-        with self.output().open('w') as get_excel_table_log:
-            get_excel_table_log.write('txt to excel finished')
-
-
-@requires(get_excel_table)
-class venn_plot(simple_task, Pubvar):
 
     contrasts = luigi.Parameter(default='')
     _plot_venn_py = VENN_PLOT
@@ -144,6 +126,27 @@ class quant_report_data(simple_task, Pubvar):
 
 
 @requires(quant_report_data)
+class get_excel_table(simple_task, Pubvar):
+    # TODO accelarate
+    def run(self):
+        main_dir = os.path.join(
+            self.proj_dir, config.module_dir[MODULE]['main']
+        )
+        excel_file_patterns = [os.path.join(main_dir, each) for each
+                               in config.module_file[MODULE]['excel_files']]
+        for each_files in pattern2files(excel_file_patterns):
+            for each_file in each_files:
+                try:
+                    txt_to_excel(each_file)
+                except EmptyDataError, msg:
+                    print('Empty file!: [{}]'.format(each_file))
+                    print(msg)
+                    sys.exit(1)
+        with self.output().open('w') as get_excel_table_log:
+            get_excel_table_log.write('txt to excel finished')
+
+
+@requires(get_excel_table)
 class quant_collection(collection_task, Pubvar):
     pass
 
