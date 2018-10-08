@@ -2,8 +2,14 @@ suppressMessages(library(ggplot2))
 suppressMessages(library(reshape2))
 suppressMessages(library(scales))
 suppressMessages(library(argparser))
-suppressMessages(library(omplotr))
 options(stringsAsFactors = F)
+
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
+# source('C:\\work\\scripts\\atom\\R\\quantification\\quant_plot.R')
+#
+# setwd('C:\\work\\project\\mRNA\\2017\\OM-mRNA-20-Wheat-P20170502\\mapping')
 
 p <- arg_parser("star mapping stats plot")
 p <- add_argument(p, "--mapping_stats", help = "star mapping plot data")
