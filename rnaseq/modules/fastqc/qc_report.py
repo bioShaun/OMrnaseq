@@ -11,8 +11,8 @@ from rnaseq.modules.base_module import collection_task
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 MODULE, _ = os.path.splitext(script_name)
-GC_PLOT_R = os.path.join(script_dir, 'gc_plot_report.R')
-RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot_report.R')
+GC_PLOT_R = os.path.join(script_dir, 'gc_plot.R')
+RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot.R')
 FASTQC_SUMMERY = os.path.join(script_dir, 'fastqc_summary_report.py')
 FQ_CFG = os.path.join(script_dir, 'get_fq_cfg.py')
 

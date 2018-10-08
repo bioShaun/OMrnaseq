@@ -117,9 +117,8 @@ module_cmd:
                  -o {t.proj_dir}/{t.fastqc_dir}'
     fastqc_summary: 'python {t._script} {t.sample_inf} {t.proj_dir}/{t._dir} {t.proj_dir}/{t._dir}/fastqc_general_stats'
     gc_plot: '{t._R} {t._script}
-              --gc_dir {t.proj_dir}/{t._dir}
-              --sample_inf {t.sample_inf}'
-    reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
+              --gc_dir {t.proj_dir}/{t._dir}'
+    reads_quality_plot: '{t._R} {t._script} --rq_dir {t.proj_dir}/{t._dir}'
   qc_report:
     get_fq_cfg: 'python {t._script} {t.fq_dir} {t.proj_dir}/{t.cfg} {t.proj_dir}'
     run_fastqc: '{t.fastqc_bin}
@@ -127,8 +126,8 @@ module_cmd:
                 --extract
                 -o {t.proj_dir}/{t.fastqc_dir}'
     fastqc_summary: 'python {t._script} {t.sample_inf} {t.proj_dir}/{t._dir} {t.proj_dir}/{t._dir}/fastqc_general_stats'
-    gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir} --sample_inf {t.sample_inf}'
-    reads_quality_plot: '{t._R} {t._script} {t.proj_dir}/{t._dir} {t.sample_inf}'
+    gc_plot: '{t._R} {t._script} --gc_dir {t.proj_dir}/{t._dir}'
+    reads_quality_plot: '{t._R} {t._script} --rq_dir {t.proj_dir}/{t._dir}'
     fastqc_report: 'qc_report -n {t.proj_name} {t.proj_dir}/{t._dir}'
   star_mapping:
     run_star: 'mkdir -p {t.proj_dir}/{t._mapping_dir}/{t.sample}/ |
@@ -336,10 +335,13 @@ module_file:
       - 'logs'
       - 'fastqc_results/*zip'
       - '.report_files'
+      - '*.report.png'
+      - '*.report.pdf'
     pdf_files:
       - 'fastqc_general_stats.txt'
       - 'gc_plot/*gc_distribution.line.png'
       - 'reads_quality_plot/*reads_quality.bar.png'
+      - '*.report.png'
   qc_report:
     ignore_files:
       - '.ignore'
@@ -449,8 +451,8 @@ file_suffix:
 
 report_picture:
   path:
-    reads_quality_plot: 'fastqc/reads_quality_plot/reads_quality.bar.png'
-    gc_plot: 'fastqc/gc_plot/gc_distribution.line.png'
+    reads_quality_plot: 'fastqc/reads_quality_plot/reads_quality.bar.report.png'
+    gc_plot: 'fastqc/gc_plot/gc_distribution.line.report.png'
     mapping_plot: 'mapping/mapping_stats_plot.png'
     inner_dis_plot: 'rseqc/inner_distance/inner_distance.bar.png'
     genebody_cov_plot: 'rseqc/genebody_coverage/genebody_coverage.point.png'
