@@ -1,10 +1,19 @@
 suppressMessages(library(argparser))
 suppressMessages(library(tximport))
+suppressMessages(library(readr))
 suppressMessages(library(edgeR))
 suppressMessages(library(dplyr))
+suppressMessages(library(RColorBrewer))
+suppressMessages(library(gplots))
+suppressMessages(library(xlsx))
+suppressMessages(library(tibble))
 suppressMessages(library(rhdf5))
-suppressMessages(library(omplotr))
+suppressMessages(require(kimisc))
 options(stringsAsFactors = F)
+
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
 
 
 p <- arg_parser("perform differential analysis")
@@ -19,6 +28,13 @@ p <- add_argument(p, '--logfc', help = 'diff gene logfc cutoff',  default = 1)
 p <- add_argument(p, '--dispersion', help = 'for analysis with no replicates',  default = 0.1)
 argv <- parse_args(p)
 
+# test
+# kallisto_dir <- './kallisto/'
+# tpm_table <- './expression_summary/Gene.tpm.txt'
+# compare <- '3BZH_vs_2BZH'
+# outdir <- './differential_analysis/3BZH_vs_2BZH'
+# logfc <- 1
+# qvalue <- 0.05
 
 # read aguments
 kallisto_dir <- argv$kallisto_dir
@@ -44,7 +60,7 @@ each_pair <- unlist(strsplit(compare, split = "_vs_"))
 con1_sample <- samples[samples$condition == each_pair[1],'sample']
 con2_sample <- samples[samples$condition == each_pair[2],'sample']
 each_pair_samples <- samples[samples$sample %in% c(con1_sample, con2_sample),]
-each_pair_files <- file.path(kallisto_dir, each_pair_samples$sample, "abundance.h5")
+each_pair_files <- file.path(kallisto_dir, each_pair_samples$sample, "abundance.tsv")
 names(each_pair_files) <- each_pair_samples$sample
 each_pair_txi <- tximport(each_pair_files, type = "kallisto", tx2gene = tx2gene)
 each_pair_cts <- each_pair_txi$counts
@@ -86,12 +102,15 @@ up_regulate_df <- filter(sorted_merged_df, logFC >= logfc, FDR <= qvalue)
 down_regulate_df <- filter(sorted_merged_df, logFC <= -(logfc), FDR <= qvalue)
 diff_genes <- c(diff_genes, up_regulate_df$Gene_ID, down_regulate_df$Gene_ID)
 write.table(sorted_merged_df, file=paste(out_file_name_prefix, 'edgeR.DE_results.txt', sep = '.'), sep='\t', quote=F, row.names=F)
+#write.xlsx(sorted_merged_df, file = paste(out_file_name_prefix, 'edgeR.DE_results', 'xlsx', sep = '.'), sheetName = each_compare_name, append = F, row.names = F)
 if (dim(up_regulate_df)[1] > 0) {
   write.table(up_regulate_df, file=paste(up_regulate_name_prefix, 'edgeR.DE_results.txt', sep = '.'), sep='\t', quote=F, row.names=F)
+  #write.xlsx(up_regulate_df, file = paste(up_regulate_name_prefix, 'edgeR.DE_results', 'xlsx', sep = '.'), sheetName = each_compare_name, append = F, row.names = F)
   write(as.character(up_regulate_df$Gene_ID), file = paste(up_regulate_name_prefix, 'edgeR.DE_results.diffgenes.txt', sep = '.'), sep = '\n')
 }
 if (dim(down_regulate_df)[1] > 0) {
   write.table(down_regulate_df, file=paste(down_regulate_name_prefix, 'edgeR.DE_results.txt', sep = '.'), sep='\t', quote=F, row.names=F)
+  #write.xlsx(down_regulate_df, file = paste(down_regulate_name_prefix, 'edgeR.DE_results', 'xlsx', sep = '.'), sheetName = each_compare_name, append = F, row.names = F)
   write(as.character(down_regulate_df$Gene_ID), file = paste(down_regulate_name_prefix, 'edgeR.DE_results.diffgenes.txt', sep = '.'), sep = '\n')
 }
 ## write diff gene list
