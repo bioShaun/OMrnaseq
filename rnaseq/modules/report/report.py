@@ -14,16 +14,15 @@ class generate_report(luigi.Task):
 
     def run(self):
         # adjust plot size for report
-        proj_dir = PurePath(self.proj_dir)
-        self.report_dir = proj_dir / self.proj_name / \
+        self.result_dir = PurePath(self.proj_dir) / self.proj_name
+        self.report_dir = self.result_dir / \
             config.module_dir['result']['report_dir']
-        report_data_path = self.report_dir / \
+        report_data_path = self.result_dir / \
             config.module_dir['result']['report_data']
         self.report_file = self.report_dir / \
             config.module_dir['result']['report_file']
         resize_report_plot(str(report_data_path))
         # generate report & clean report dir
-        self.result_dir = PurePath(self.proj_dir) / self.proj_name
         report_cmd = config.module_cmd['report']['generate_report']
         report_cmd = report_cmd.format(t=self)
         envoy.run(report_cmd)

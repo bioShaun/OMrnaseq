@@ -36,7 +36,8 @@ setup(
         'HTSeq',
         'click',
         'Pillow',
-        'biopython'],
+        'biopython',
+        'pathlib'],
 )
 
 print '''------------------------------

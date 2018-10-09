@@ -86,7 +86,7 @@ module_dir:
   result:
     result: 'analysis_result'
     report_dir: 'analysis_report'
-    report_data: 'report_data'
+    report_data: 'analysis_report/report_data'
     report_file: 'analysis_report.pdf'
   qc:
     main: 'qc'
