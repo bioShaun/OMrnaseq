@@ -61,25 +61,25 @@ pip install -e .
 mrna \
     -p /path/of/analysis \
     -s /path/of/sample_inf \
-	-f /path/of/fastqs \
-	-w parallels_number \
-	fastqc
+    -f /path/of/fastqs \
+    -w parallels_number \
+    fastqc
 
 ```
 
-sample_inf: tab-delimited text file indicating biological replicate relationships, ![example](example/example.sample_inf).
-
+sample_inf: tab-delimited text file indicating biological replicate relationships; see [example](example/example.sample_inf).
+fastqs: fastq files named format sample_1.clean.fq.gz, sample_2.clean.fq.gz.
 
 ### mapping
 
 ```bash
 mrna \
-	-p /path/of/analysis \
-	-s /path/of/sample_inf \
-	-f /path/of/fastqs \
-	-w parallels_number \
-	--star_index /path/to/star/index \
-	mapping
+    -p /path/of/analysis \
+    -s /path/of/sample_inf \
+    -f /path/of/fastqs \
+    -w parallels_number \
+    --star_index /path/to/star/index \
+    mapping
 	
 ```
 
@@ -88,30 +88,37 @@ mrna \
 ```bash
 
 mrna \
-	-p /path/of/analysis \
-	-s /path/of/sample_inf \
-	-f /path/of/fastqs \
-	-w parallels_number \
-	--gene2tr /gene/transcript/map/file \
-	--kallisto_idx /path/to/kallsito/index 
+    -p /path/of/analysis \
+    -s /path/of/sample_inf \
+    -f /path/of/fastqs \
+    -w parallels_number \
+    --gene2tr /gene/transcript/map/file \
+    --kallisto_idx /path/to/kallsito/index 
 
 ```
+
+gene2tr: file containing 'gene(tab)transcript' identifiers per line; see [example](example/example.gene2tr).
 
 ### enrich
 
 ```bash
 mrna \
-	-p /path/of/analysis \
-	-w parallels_number \
-	-n result_name \
-	--go /go/annotation/file \
-	--gene_length /gene/length/file \
-	--kegg_blast /gene/blast/to/kegg/pep/tab/outfile \
-	--kegg_abbr species_kegg_abbr \
-	--kegg_background species_kegg_background_abbr \ # default is kegg abbr
-	--gene_list_file /file/of/gene/list/path \
-	enrich
+    -p /path/of/analysis \
+    -w parallels_number \
+    -n result_name \
+    --go /go/annotation/file \
+    --gene_length /gene/length/file \
+    --kegg_blast /gene/blast/to/kegg/pep/tab/outfile \
+    --kegg_abbr species_kegg_abbr \
+    --kegg_background species_kegg_background_abbr \ # default is kegg abbr
+    --gene_list_file /file/of/gene/list/path \
+    enrich
 ```
+
+go: file containing 'gene(tab)go_ids' per line, go_ids are seperated with ","; see [example](example/example.go).
+gene_length: file containing 'gene(tab)gene_length' per line; see [example](example/example.gene_length).
+kegg_blast: blast result of gene with KOBAS pep sequence; see [example](example/example.kegg_blast)
+gene_list_file: file containing gene list file path. see [example](example/example.gene_list_file).
 
 ### rnaseq
 
@@ -122,20 +129,20 @@ rnaseq is a collection of module: qc, quant and enrich. So you could run three m
 mrna \
     -p /path/of/analysis \
     -s /path/of/sample_inf \
-	-f /path/of/fastqs \
-	-w parallels_number \
-	--gene2tr /gene/transcript/map/file \
-	--kallisto_idx /path/to/kallsito/index \
-	--go /go/annotation/file \
-	--gene_length /gene/length/file \
-	--kegg_blast /gene/blast/to/kegg/pep/tab/outfile \
-	--kegg_abbr species_kegg_abbr \
-	rnaseq
+    -f /path/of/fastqs \
+    -w parallels_number \
+    --gene2tr /gene/transcript/map/file \
+    --kallisto_idx /path/to/kallsito/index \
+    --go /go/annotation/file \
+    --gene_length /gene/length/file \
+    --kegg_blast /gene/blast/to/kegg/pep/tab/outfile \
+    --kegg_abbr species_kegg_abbr \
+    rnaseq
 
 # you can also combine the module by yourself
 mrna \
-	... # parameters required for each module
-	module1 \
-	module2
+    ... # parameters required for each module
+    module1 \
+    module2
 
 ```
