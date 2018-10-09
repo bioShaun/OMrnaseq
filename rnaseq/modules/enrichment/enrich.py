@@ -142,7 +142,7 @@ class run_enrich_barplot(simple_task, Pubvar):
                            genes=diff_files[n], kegg=self.kegg,
                            sp=self.sp, kegg_bg=self.kegg_bg),
                  run_pathway(proj_dir=self.proj_dir, go=self.go,
-                             topgo=self.topgo, gene_length=self.gene_length,
+                             gene_length=self.gene_length,
                              compare=self.compare, reg=r,
                              genes=diff_files[n], kegg=self.kegg,
                              sp=self.sp, kegg_bg=self.kegg_bg), )
@@ -168,7 +168,7 @@ class enrich_collection(collection_task, Pubvar):
         )
         compare_name_list = os.listdir(diff_dir)
         return [run_enrich_barplot(proj_dir=self.proj_dir, go=self.go,
-                                   topgo=self.topgo, kegg_bg=self.kegg_bg,
+                                   kegg_bg=self.kegg_bg,
                                    gene_length=self.gene_length,
                                    kegg=self.kegg, sp=self.sp,
                                    compare=compare)

@@ -85,8 +85,9 @@ module_dir:
     logs: 'logs'
   result:
     result: 'analysis_result'
-    report: 'analysis_report'
-    report_data: 'analysis_report/report_data'
+    report_dir: 'analysis_report'
+    report_data: 'report_data'
+    report_file: 'analysis_report.pdf'
   qc:
     main: 'qc'
     logs: 'qc/logs'
@@ -304,6 +305,9 @@ module_cmd:
                --files-from={t.proj_dir}/{t.main_dir}/.report_files
                {t.proj_dir}/{t.main_dir}
                {t.proj_dir}/{t.proj_name}/{t.report_data}/{t.main_dir}'
+  report:
+    generate_report: 'rna_report {t.result_dir} -pdf |
+                      mv {t.report_file} {t.result_dir}'  
 
 #################################################
 # files ignore in results and needed in report  #
