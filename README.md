@@ -67,8 +67,8 @@ mrna \
 
 ```
 
-sample_inf: tab-delimited text file indicating biological replicate relationships; see [example](example/example.sample_inf).
-fastqs: fastq files named format sample_1.clean.fq.gz, sample_2.clean.fq.gz.
+- sample_inf: tab-delimited text file indicating biological replicate relationships; see [example](example/example.sample_inf).
+- fastqs: fastq files named format sample_1.clean.fq.gz, sample_2.clean.fq.gz.
 
 ### mapping
 
@@ -97,7 +97,7 @@ mrna \
 
 ```
 
-gene2tr: file containing 'gene(tab)transcript' identifiers per line; see [example](example/example.gene2tr).
+- gene2tr: file containing 'gene(tab)transcript' identifiers per line; see [example](example/example.gene2tr).
 
 ### enrich
 
@@ -115,10 +115,10 @@ mrna \
     enrich
 ```
 
-go: file containing 'gene(tab)go_ids' per line, go_ids are seperated with ","; see [example](example/example.go).
-gene_length: file containing 'gene(tab)gene_length' per line; see [example](example/example.gene_length).
-kegg_blast: blast result of gene with KOBAS pep sequence; see [example](example/example.kegg_blast)
-gene_list_file: file containing gene list file path. see [example](example/example.gene_list_file).
+- go: file containing 'gene(tab)go_ids' per line, go_ids are seperated with ","; see [example](example/example.go).
+- gene_length: file containing 'gene(tab)gene_length' per line; see [example](example/example.gene_length).
+- kegg_blast: blast result of gene with KOBAS pep sequence; see [example](example/example.kegg_blast)
+- gene_list_file: file containing gene list file path. see [example](example/example.gene_list_file).
 
 ### rnaseq
 
