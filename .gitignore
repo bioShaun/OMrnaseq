@@ -112,6 +112,7 @@ rnaseq/modules/enrichment/kegg_pathway
 # emacs tmp
 *#
 *~
+*flymake.py
 
 # database yaml file
 database.yaml
