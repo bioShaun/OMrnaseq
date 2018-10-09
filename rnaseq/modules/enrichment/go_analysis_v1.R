@@ -1,21 +1,30 @@
 suppressMessages(library(dplyr))
 suppressMessages(library(argparser))
-suppressMessages(library(omplotr))
+suppressMessages(require('kimisc',quietly = T))
 
 p <- arg_parser("perform go analysis")
 p <- add_argument(p, "--name", help = "output name")
 p <- add_argument(p, "--gene_list", help = "gene list to analysis")
 p <- add_argument(p, "--go_anno", help = "gene id and transcript id mapping file")
+p <- add_argument(p, "--topgo_anno", help = "top go annotation file")
 p <- add_argument(p, "--gene_length", help = "gene length file")
 p <- add_argument(p, "--out_dir", help = "diff analyssi output directory")
 argv <- parse_args(p)
 
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, 'go_lib.R')
+source(lib_path)
 
+## for test quant_dir <- './' diff_dir <- file.path(quant_dir,
+## 'differential_analysis') go_anno_file <- './gga.txt' gene_length_file <-
+## './Gallus_gallus.Galgal4.85.gene.length' out_dir <- './enrich/' topgo_anno_file
+## <- './gga_gene_go.txt'
 
 ## get the parameter
 gene_list <- argv$gene_list
 name <- argv$name
 go_anno_file <- argv$go_anno
+topgo_anno_file <- argv$topgo_anno
 gene_length_file <- argv$gene_length
 go_out_dir <- argv$out_dir
 
@@ -26,6 +35,7 @@ dir.create(togo_dir, recursive = 1, showWarnings = F)
 
 # read annotations
 gene_length_df <- read.delim(gene_length_file, header = F)
+go_anno_df <- read.delim(go_anno_file, sep = ",")
 
 # read gene list
 gene_list_vector <- scan(gene_list, what=character())
@@ -33,8 +43,8 @@ gene_list_vector <- scan(gene_list, what=character())
 out_preifx_name <- paste(name, "go.enrichment", sep = ".")
 out_prefix_path <- file.path(go_out_dir, out_preifx_name)
 # run goseq
-enrich_result <- om_goseq(gene_list_vector, gene_length_df,
-  go_anno_file, out_prefix_path)
+enrich_result <- run_goseq(gene_list_vector, gene_length_df,
+  go_anno_df, out_prefix_path)
 # run topgo
-om_topgo(go_anno_file, gene_list_vector, enrich_result, name,
+run_topgo(topgo_anno_file, gene_list_vector, enrich_result, name,
   togo_dir)

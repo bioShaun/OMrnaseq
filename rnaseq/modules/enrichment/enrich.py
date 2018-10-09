@@ -30,7 +30,6 @@ class Pubvar:
 
 class enrich_prepare(prepare, Pubvar):
     go = luigi.Parameter()
-    topgo = luigi.Parameter()
     gene_length = luigi.Parameter()
     kegg = luigi.Parameter()
     sp = luigi.Parameter()
@@ -138,7 +137,7 @@ class run_enrich_barplot(simple_task, Pubvar):
             _dir=diff_dir, t=self, r=reg, sfx=diff_list_sfx
         ) for reg in reg_list]
         return [(run_goseq(proj_dir=self.proj_dir, go=self.go,
-                           topgo=self.topgo, gene_length=self.gene_length,
+                           gene_length=self.gene_length,
                            compare=self.compare, reg=r,
                            genes=diff_files[n], kegg=self.kegg,
                            sp=self.sp, kegg_bg=self.kegg_bg),
