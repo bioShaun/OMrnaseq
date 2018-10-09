@@ -277,13 +277,6 @@ def process_pipeline(modules, proj_dir, sample_inf,
             sys.exit('Paramters needed!')
         else:
             luigi.build([each], workers=workers)
-    # # generate report
-    # report_data = config.module_dir['result']['report_data']
-    # report_data_path = PurePath(proj_dir) / proj_name / report_data
-    # resize_report_plot(str(report_data_path))
-    # result_dir = PurePath(proj_dir) / proj_name
-    # report_cmd = f'rna_report {result_dir} -pdf'
-    # envoy.run(report_cmd)
 
 
 @cli.command('fastqc')
