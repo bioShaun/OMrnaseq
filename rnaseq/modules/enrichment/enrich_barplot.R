@@ -18,12 +18,6 @@ all_lists_path <- argv$diff
 enrichment_type <- argv$type
 output_path <- enrichment_tables_path
 
-# print(all_count_file)
-
-#----for test-----
-# all_count_file <- './gga.txt' enrichment_type <- 'go' enrichment_tables_path <-
-# './enrich/go/N7_vs_N42/' all_lists_path <- './differential_analysis/N7_vs_N42/'
-# output_path <- './enrich/go/N7_vs_N42/'
 #----theme set-----
 enrich_theme <- theme_bw() + theme(legend.key = element_blank(), axis.text.x = element_text(color = "black",
   face = "bold", angle = 90, hjust = 1, vjust = 0.5, size = rel(0.8)), axis.text.y = element_text(color = "black",
@@ -50,11 +44,6 @@ enrich_data <- function(data, type, label, show_num, max_name_length, all_count,
   } else stop("check your data and rownames!")
   names(data)[1:5] <- c("Term", "Input_number", "Background_number", "P_value",
     "Corrected_P_Value")
-  # if (length(which(data$P_value < 0.05)) >= show_num) {
-  #   data <- data[which(data$P_value < 0.05), ][1:show_num, ]
-  # } else {
-  #   data <- data[which(data$P_value < 0.05), ]
-  # }
   # modified: show top 15 Terms, don't care about it's pvalue
   # TODO add ** to qvlue < 0.05 term, add * to pvalue < 0.05 term
   data <- data[1:show_num, ]

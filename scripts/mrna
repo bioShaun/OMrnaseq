@@ -26,9 +26,9 @@ MODULE_PARAMS = {
     'fastqc': (),
     'quant': ('kallisto_idx', 'gene2tr'),
     'mapping': ('star_index',),
-    'pipe_enrich': ('go', 'topgo', 'gene_length',
+    'pipe_enrich': ('go', 'gene_length',
                     'kegg_blast', 'kegg_abbr'),
-    'enrich': ('go', 'topgo', 'gene_length',
+    'enrich': ('go', 'gene_length',
                'kegg_blast', 'kegg_abbr', 'gene_list_file')
 }
 
@@ -88,7 +88,6 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             proj_name=ctx.obj['proj_name'],
             go=ctx.obj['go'],
-            topgo=ctx.obj['topgo'],
             gene_length=ctx.obj['gene_length'],
             kegg=ctx.obj['kegg_blast'],
             sp=ctx.obj['kegg_abbr'],
@@ -103,7 +102,6 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             proj_name=ctx.obj['proj_name'],
             go=ctx.obj['go'],
-            topgo=ctx.obj['topgo'],
             gene_length=ctx.obj['gene_length'],
             kegg=ctx.obj['kegg_blast'],
             sp=ctx.obj['kegg_abbr'],
@@ -191,12 +189,7 @@ def launch_module(ctx, module_name):
               default=None)
 @click.option('--go',
               type=click.Path(dir_okay=False),
-              help='GO annotation for goseq analysis.\
-              REQUIED for [pipe_enrich, enrich] module.',
-              default=None)
-@click.option('--topgo',
-              type=click.Path(dir_okay=False),
-              help='GO annotation for TopGO analysis.\
+              help='GO annotation for go analysis.\
               REQUIED for [pipe_enrich, enrich] module.',
               default=None)
 @click.option('--gene_length',
@@ -232,7 +225,7 @@ def launch_module(ctx, module_name):
 @click.pass_context
 def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
         gene2tr, kallisto_idx, contrasts, proj_name,
-        star_index, go, topgo, gene_length, kegg_blast,
+        star_index, go, gene_length, kegg_blast,
         kegg_abbr, kegg_background, gene_list_file,
         gene_anno):
     ctx.obj['proj_dir'] = proj_dir
@@ -245,7 +238,6 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
     ctx.obj['contrasts'] = contrasts
     ctx.obj['star_index'] = star_index
     ctx.obj['go'] = go
-    ctx.obj['topgo'] = topgo
     ctx.obj['gene_length'] = gene_length
     ctx.obj['kegg_blast'] = kegg_blast
     ctx.obj['kegg_abbr'] = kegg_abbr
@@ -262,7 +254,7 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
 def process_pipeline(modules, proj_dir, sample_inf,
                      fq_dir, workers, gene2tr,
                      kallisto_idx, contrasts, proj_name,
-                     star_index, go, topgo, gene_length, kegg_blast,
+                     star_index, go, gene_length, kegg_blast,
                      kegg_abbr, kegg_background, gene_list_file,
                      gene_anno):
     module_list = []
