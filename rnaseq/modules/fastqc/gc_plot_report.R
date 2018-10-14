@@ -50,6 +50,8 @@ for (i in seq(length(gc_files))) {
   each_sample_out_name <- paste(sample_id, 'gc_distribution.line', sep = '.')
   each_sample_out_path <- file.path(gc_dir, each_sample_out_name)
   rs_each_sample_gc_df <- melt(each_sample_gc_df,id=c('X.Base', 'sample'))
+  ## gc_test_data <- rs_each_sample_gc_df
+  ## save(gc_test_data, file='gc_test.Rdata')
   gc_line_plot(rs_each_sample_gc_df, each_sample_out_path)
 }
 gc_file_df <- ldply(gc_file_list, data.frame)

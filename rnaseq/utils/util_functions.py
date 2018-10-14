@@ -12,6 +12,10 @@ import subprocess
 from PIL import Image
 from click import Option, UsageError
 import itertools
+from pathlib import Path
+
+
+CLICK_CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 class MutuallyExclusiveOption(Option):
@@ -121,15 +125,22 @@ def write_obj_to_file(obj, fn, append=False):
 
 def txt_to_excel(txt_file, sheet_name='Sheet1'):
     pandas.io.formats.excel.header_style = None
-    txt_df = pd.read_table(txt_file)
     txt_file_name = os.path.basename(txt_file)
     txt_file_dir = os.path.dirname(txt_file)
     txt_file_prefix = os.path.splitext(txt_file_name)[0]
     excel_file = os.path.join(txt_file_dir, '{}.xlsx'.format(txt_file_prefix))
-    writer = pd.ExcelWriter(excel_file, engine='xlsxwriter', options={
-                            'strings_to_urls': False})
-    txt_df.to_excel(writer, sheet_name, index=False)
-    writer.save()
+    if os.path.exists(excel_file):
+        return
+    else:
+        txt_df = pd.read_table(txt_file)
+        writer = pd.ExcelWriter(excel_file,
+                                engine='xlsxwriter',
+                                options={
+                                    'strings_to_urls': False
+                                }
+                                )
+        txt_df.to_excel(writer, sheet_name, index=False)
+        writer.save()
 
 
 def purge(pattern):
@@ -303,3 +314,23 @@ def check_data(sample_inf, fq_dir):
         return failed_fq
     failed_fqs = map(check_fq, sample_df.sample_id)
     return [item for sublist in failed_fqs for item in sublist]
+
+
+def pattern2files(file_patterns):
+    for each_pattern in file_patterns:
+        each_files = glob.glob(each_pattern)
+        yield each_files
+
+
+def add_gene_annotation(exp_table, anno_file):
+    exp_table = Path(exp_table)
+    anno_exp_table = exp_table.with_suffix('.anno.txt')
+    if anno_exp_table.exists():
+        return
+    anno_cmd = 'merge_files {exp} {ann} {out}'.format(
+        exp=exp_table,
+        ann=anno_file,
+        out=anno_exp_table
+    )
+    r = envoy.run(anno_cmd)
+    return r.std_err

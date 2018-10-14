@@ -7,14 +7,16 @@ import sys
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import nohuprun_cmd, clean_logs
 from rnaseq.utils.util_functions import MutuallyExclusiveOption
-from rnaseq.utils.util_functions import pipe_default_para
+from rnaseq.utils.util_functions import pipe_default_para, save_mkdir
 from rnaseq.utils.util_functions import check_data, resize_report_plot
 from rnaseq.modules.fastqc import fastqc
 from rnaseq.modules.quantification import quant
 from rnaseq.modules.mapping import star_mapping
 from rnaseq.modules.enrichment import enrich, quick_enrich
+from rnaseq.modules.report import report
 import itertools
 from pathlib import PurePath
+import envoy
 
 
 CURRENT_DIR = os.getcwd()
@@ -26,9 +28,9 @@ MODULE_PARAMS = {
     'fastqc': (),
     'quant': ('kallisto_idx', 'gene2tr'),
     'mapping': ('star_index',),
-    'pipe_enrich': ('go', 'topgo', 'gene_length',
+    'pipe_enrich': ('go', 'gene_length',
                     'kegg_blast', 'kegg_abbr'),
-    'enrich': ('go', 'topgo', 'gene_length',
+    'enrich': ('go', 'gene_length',
                'kegg_blast', 'kegg_abbr', 'gene_list_file')
 }
 
@@ -64,7 +66,8 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             tr_index=ctx.obj['kallisto_idx'],
             gene2tr=ctx.obj['gene2tr'],
-            contrasts=ctx.obj['contrasts']
+            contrasts=ctx.obj['contrasts'],
+            gene_anno=ctx.obj['gene_anno']
         )
 
     mapping_missing_params = check_params(ctx, 'mapping')
@@ -87,7 +90,6 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             proj_name=ctx.obj['proj_name'],
             go=ctx.obj['go'],
-            topgo=ctx.obj['topgo'],
             gene_length=ctx.obj['gene_length'],
             kegg=ctx.obj['kegg_blast'],
             sp=ctx.obj['kegg_abbr'],
@@ -102,13 +104,17 @@ def load_module(ctx):
             proj_dir=ctx.obj['proj_dir'],
             proj_name=ctx.obj['proj_name'],
             go=ctx.obj['go'],
-            topgo=ctx.obj['topgo'],
             gene_length=ctx.obj['gene_length'],
             kegg=ctx.obj['kegg_blast'],
             sp=ctx.obj['kegg_abbr'],
             kegg_bg=ctx.obj['kegg_background'],
             gene_files=ctx.obj['gene_list_file']
         )
+
+    report_module = report.generate_report(
+        proj_dir=ctx.obj['proj_dir'],
+        proj_name=ctx.obj['proj_name']
+    )
 
     # map modules to name
     module_dict = {
@@ -117,6 +123,9 @@ def load_module(ctx):
         'mapping': [mapping_module],
         'pipe_enrich': [pipe_enrich_module],
         'enrich': [enrich_module],
+        'report': [report_module],
+        'rnaseq': [fastqc_module, quant_module,
+                   pipe_enrich_module, report_module]
     }
 
     return module_dict
@@ -141,7 +150,7 @@ def launch_module(ctx, module_name):
 @click.group(chain=True)
 @click.option('-p',
               '--proj_dir',
-              type=click.Path(exists=True),
+              type=click.Path(file_okay=False),
               default=CURRENT_DIR,
               help='Project analysis directory.                 \
               DEFAULT: current dir.')
@@ -153,7 +162,7 @@ def launch_module(ctx, module_name):
               DEFAULT: "results".')
 @click.option('-s',
               '--sample_inf',
-              type=click.Path(exists=True),
+              type=click.Path(dir_okay=False),
               default=DEFAULT_SAMPLE_INI,
               help='Group vs Sample file.                       \
               DEFAULT: "sample.ini" in current directory.')
@@ -165,7 +174,7 @@ def launch_module(ctx, module_name):
               DEFAULT: 4.')
 @click.option('-f',
               '--fq_dir',
-              type=click.Path(exists=True),
+              type=click.Path(file_okay=False),
               help='Directory place analysis fq files. \
               DEFAULT: "cleandata" in current dir.',
               default=DEFAULT_FQ_DIR)
@@ -190,12 +199,7 @@ def launch_module(ctx, module_name):
               default=None)
 @click.option('--go',
               type=click.Path(dir_okay=False),
-              help='GO annotation for goseq analysis.\
-              REQUIED for [pipe_enrich, enrich] module.',
-              default=None)
-@click.option('--topgo',
-              type=click.Path(dir_okay=False),
-              help='GO annotation for TopGO analysis.\
+              help='GO annotation for go analysis.\
               REQUIED for [pipe_enrich, enrich] module.',
               default=None)
 @click.option('--gene_length',
@@ -220,15 +224,21 @@ def launch_module(ctx, module_name):
               default=None)
 @click.option('--gene_list_file',
               type=click.Path(dir_okay=False),
-              help='gene list file for analysis.            \
+              help='Gene list file for analysis.            \
               REQUIED for [enrich] module.',
               default=None)
+@click.option('--gene_anno',
+              type=click.Path(dir_okay=False),
+              help='Gene annotation file for expression table.            \
+              SUGGESTED for [quant] module.',
+              default='')
 @click.pass_context
 def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
         gene2tr, kallisto_idx, contrasts, proj_name,
-        star_index, go, topgo, gene_length, kegg_blast,
-        kegg_abbr, kegg_background, gene_list_file):
-    ctx.obj['proj_dir'] = proj_dir
+        star_index, go, gene_length, kegg_blast,
+        kegg_abbr, kegg_background, gene_list_file,
+        gene_anno):
+    ctx.obj['proj_dir'] = os.path.abspath(proj_dir)
     ctx.obj['proj_name'] = proj_name
     ctx.obj['sample_inf'] = sample_inf
     ctx.obj['fq_dir'] = fq_dir
@@ -238,11 +248,11 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
     ctx.obj['contrasts'] = contrasts
     ctx.obj['star_index'] = star_index
     ctx.obj['go'] = go
-    ctx.obj['topgo'] = topgo
     ctx.obj['gene_length'] = gene_length
     ctx.obj['kegg_blast'] = kegg_blast
     ctx.obj['kegg_abbr'] = kegg_abbr
     ctx.obj['gene_list_file'] = gene_list_file
+    ctx.obj['gene_anno'] = gene_anno
     if kegg_background is None:
         ctx.obj['kegg_background'] = kegg_abbr
     else:
@@ -254,8 +264,9 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
 def process_pipeline(modules, proj_dir, sample_inf,
                      fq_dir, workers, gene2tr,
                      kallisto_idx, contrasts, proj_name,
-                     star_index, go, topgo, gene_length, kegg_blast,
-                     kegg_abbr, kegg_background, gene_list_file):
+                     star_index, go, gene_length, kegg_blast,
+                     kegg_abbr, kegg_background, gene_list_file,
+                     gene_anno):
     module_list = []
     param_list = []
     for each in itertools.chain.from_iterable(modules):
@@ -266,39 +277,48 @@ def process_pipeline(modules, proj_dir, sample_inf,
             sys.exit('Paramters needed!')
         else:
             luigi.build([each], workers=workers)
-    report_data = config.module_dir['result']['report_data']
-    report_data_path = PurePath(proj_dir) / proj_name / report_data
-    resize_report_plot(str(report_data_path))
 
 
 @cli.command('fastqc')
 @click.pass_context
-def qc(ctx):
+def qc_cmd(ctx):
     return launch_module(ctx, 'fastqc')
 
 
 @cli.command('quant')
 @click.pass_context
-def quantification(ctx):
+def quantification_cmd(ctx):
     return launch_module(ctx, 'quant')
 
 
 @cli.command('mapping')
 @click.pass_context
-def mapping(ctx):
+def mapping_cmd(ctx):
     return launch_module(ctx, 'mapping')
 
 
 @cli.command('pipe_enrich')
 @click.pass_context
-def mapping(ctx):
+def pipe_enrich_cmd(ctx):
     return launch_module(ctx, 'pipe_enrich')
 
 
 @cli.command('enrich')
 @click.pass_context
-def mapping(ctx):
+def enrich_cmd(ctx):
     return launch_module(ctx, 'enrich')
+
+
+@cli.command('report')
+@click.pass_context
+def report_cmd(ctx):
+    return launch_module(ctx, 'report')
+
+
+@cli.command('rnaseq')
+@click.pass_context
+def rnaseq_cmd(ctx):
+    return launch_module(ctx, 'rnaseq')
 
 
 if __name__ == '__main__':

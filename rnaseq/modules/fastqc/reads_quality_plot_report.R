@@ -51,3 +51,4 @@ selected_df <- filter(qulity_data_df, sample %in% qulity_data_samples[1:selected
 selected_df$sample <- factor(selected_df$sample, levels = qulity_data_samples)
 qulity_data_out <- file.path(file_path, 'reads_quality.bar.report')
 reads_quality_plot(selected_df, qulity_data_out)
+

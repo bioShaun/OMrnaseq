@@ -1,18 +1,23 @@
 # 2016-10-18 for mRNA report reads qulity barplot
+library(scales)
+library(ggplot2)
+
+argv <- commandArgs(T)
+file_path <- argv[1]
+group_sample <- argv[2]
 options(stringsAsFactors = F)
-suppressMessages(library('omplotr'))
-suppressMessages(library('plyr'))
-suppressMessages(library('argparser'))
-suppressMessages(library('dplyr'))
 
-p <- arg_parser('reads quality plot')
-p <- add_argument(p,'--rq_dir',help = 'reads quality directory.')
-p <- add_argument(p, '--sample_inf', help = 'sample info file.')
-argv <- parse_args(parser = p)
+script_dir <- dirname(rprojroot::thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
 
-file_path <- argv$rq_dir
+# for test
+# source('../../scripts/atom/R/rseqc/RNAseq_plot_lib.R')
+# file_path <- './reads_quality_plot/'
+# group_sample <- './group_sample'
 
 all_files <- list.files(file_path)
+group_inf_df <- read.delim(group_sample, header = F)
 qulity_data_files <- all_files[grep("*reads_quality.txt", all_files)]
 qulity_data <- list()
 
@@ -40,9 +45,6 @@ for (i in 1:length(qulity_data)) {
 }
 
 qulity_data_df <- ldply(qulity_data, data.frame)
-qulity_data_samples <- unique(qulity_data_df$sample)
-selected_number <- ifelse(length(qulity_data_samples) < 9, length(qulity_data_samples), 9)
-selected_df <- filter(qulity_data_df, sample %in% qulity_data_samples[1:selected_number])
-selected_df$sample <- factor(selected_df$sample, levels = qulity_data_samples)
-qulity_data_out <- file.path(file_path, 'reads_quality.bar.report')
-reads_quality_plot(selected_df, qulity_data_out)
+qulity_data_df$sample <- factor(qulity_data_df$sample, levels = group_inf_df$V2)
+qulity_data_out <- file.path(file_path, 'reads_quality.bar')
+reads_quality_plot(qulity_data_df, qulity_data_out)

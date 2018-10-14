@@ -2,7 +2,11 @@ suppressMessages(library(argparser))
 suppressMessages(library(plyr))
 suppressMessages(library(dplyr))
 suppressMessages(library(data.table))
-suppressMessages(library(omplotr))
+suppressMessages(require(kimisc))
+
+script_dir <- dirname(thisfile())
+lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
+source(lib_path)
 
 p <- arg_parser("for expression analysis report plot")
 p <- add_argument(p, "--exp_dir", help = "expression summary directory")
@@ -17,6 +21,9 @@ DIFF_HEATMAP_GENE = 30000
 CUT_TREE_PER = 20
 MIN_CLUSTER_NUM = 10
 MIN_CLUSTER_POR = 0.005
+# for test setwd('C:\\work\\pipe\\quantification') quant_dir <- './'
+# sample_inf <- '../fastqc/group_sample'
+# source('C:\\work\\scripts\\atom\\R\\quantification\\quant_plot.R')
 
 # read parameters
 exp_dir <- argv$exp_dir
@@ -28,6 +35,7 @@ logfc <- argv$logfc
 samples <- read.delim(sample_inf, stringsAsFactors = F, header = F)
 colnames(samples) <- c("condition", "sample")
 compare_names <- basename(list.dirs(diff_dir, recursive=F))
+# all_combine = combn(unique(samples$condition), 2)
 diff_df_list = list()
 plot_number = min(c(16, length(compare_names)))
 
@@ -62,10 +70,8 @@ write.table(each_compare_df, file = html_example_diff_out, sep = "\t", quote = F
 diff_gene_id <- unique(diff_genes)
 gene_count_matrix <- file.path(exp_dir, "Gene.count.txt")
 gene_tpm_matrix <- file.path(exp_dir, "Gene.tpm.txt")
-gene_count_matrix_df <- fread(gene_count_matrix, check.names = F)
-gene_count_matrix_df <- data.frame(gene_count_matrix_df, check.names = F)
-gene_tpm_matrix_df <- fread(gene_tpm_matrix, check.names = F)
-gene_tpm_matrix_df <- data.frame(gene_tpm_matrix_df, check.names = F)
+gene_count_matrix_df <- read.delim(gene_count_matrix, check.names = F)
+gene_tpm_matrix_df <- read.delim(gene_tpm_matrix, check.names = F)
 out_diff_gene_count_matrix <- filter(gene_count_matrix_df, Gene_ID %in% diff_gene_id)
 out_diff_gene_tpm_matrix <- filter(gene_tpm_matrix_df, Gene_ID %in% diff_gene_id)
 
@@ -80,12 +86,12 @@ if (dim(out_diff_gene_count_matrix)[1] > 0) {
   # plot heatmap
   diff_gene_count = dim(diff_gene_tpm_matrix)[1]
   if (diff_gene_count <= DIFF_HEATMAP_GENE) {
-    om_heatmap(diff_gene_tpm_matrix, samples=samples, outdir=exp_dir)
+    om_heatmap(plot_data=diff_gene_tpm_matrix, samples=samples, outdir=exp_dir)
   } else {
     gene_mean_exp <- sort(rowMeans(diff_gene_tpm_matrix), decreasing = T)
     top_genes <- names(gene_mean_exp[1:DIFF_HEATMAP_GENE])
     diff_gene_tpm_matrix <- diff_gene_tpm_matrix[top_genes, ]
-    om_heatmap(diff_gene_tpm_matrix, samples, outdir=exp_dir)
+    om_heatmap(plot_data=diff_gene_tpm_matrix, samples=samples, outdir=exp_dir)
     diff_gene_count <- dim(diff_gene_tpm_matrix)[1]
   }
 
@@ -118,7 +124,7 @@ if (dim(out_diff_gene_count_matrix)[1] > 0) {
     partition_data_df$cluster <- cluster_name
     melt_partition_data_df <- melt(partition_data_df, id = c("cluster", "Gene_id"))
     out_prefix <- file.path(cluster_data_dir, cluster_name)
-    om_cluster_plot(melt_partition_data_df, out_prefix = out_prefix)
+    cluster_plot(plot_data = melt_partition_data_df, out_prefix = out_prefix)
     if (dim(partition_data)[1] > cluster_num_cutoff) {
       all_partition_list[[m]] <- partition_data_df
       m <- m + 1
@@ -131,5 +137,5 @@ if (dim(out_diff_gene_count_matrix)[1] > 0) {
   melt_all_cluster_df$variable <- factor(melt_all_cluster_df$variable, levels = samples$sample)
   melt_all_cluster_df$cluster <- factor(melt_all_cluster_df$cluster, levels = unique(melt_all_cluster_df$cluster))
   all_cluster_prefix = file.path(exp_dir, 'Diff.genes.cluster')
-  om_cluster_plot(melt_all_cluster_df, out_prefix = all_cluster_prefix)
+  cluster_plot(plot_data = melt_all_cluster_df, out_prefix = all_cluster_prefix)
 }

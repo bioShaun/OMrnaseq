@@ -28,7 +28,6 @@ class Pubvar:
 class q_enrich_prepare_dir(prepare, Pubvar):
 
     go = luigi.Parameter()
-    topgo = luigi.Parameter()
     gene_length = luigi.Parameter()
     kegg = luigi.Parameter()
     sp = luigi.Parameter()
@@ -84,12 +83,12 @@ class q_enrich_collection(collection_task, Pubvar):
             print "2. Or one column file: gene list path (using gene list prefix as name)"
             print "----------------------------"
             sys.exit(1)
-        return [(run_goseq(go=self.go, topgo=self.topgo,
+        return [(run_goseq(go=self.go,
                            gene_length=self.gene_length, kegg=self.kegg,
                            sp=self.sp, proj_dir=self.proj_dir,
                            name=gene_files_df.name[each],
                            genes=gene_files_df.path[each]),
-                 run_kobas(go=self.go, topgo=self.topgo, kegg_bg=self.kegg_bg,
+                 run_kobas(go=self.go, kegg_bg=self.kegg_bg,
                            gene_length=self.gene_length, kegg=self.kegg,
                            sp=self.sp, proj_dir=self.proj_dir,
                            name=gene_files_df.name[each],
