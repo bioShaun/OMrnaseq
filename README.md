@@ -117,7 +117,7 @@ mrna \
 
 - go: file containing 'gene(tab)go_ids' per line, go_ids are seperated with ","; see [example](example/example.go).
 - gene_length: file containing 'gene(tab)gene_length' per line; see [example](example/example.gene_length).
-- kegg_blast: blast result of gene with KOBAS pep sequence; see [example](example/example.kegg_blast)
+- kegg_blast: blast result of gene with KOBAS pep sequence; see [example](example/example.kegg_blast).
 - gene_list_file: file containing gene list file path. see [example](example/example.gene_list_file).
 
 ### rnaseq

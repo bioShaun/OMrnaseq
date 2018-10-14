@@ -337,13 +337,12 @@ module_file:
       - 'logs'
       - 'fastqc_results/*zip'
       - '.report_files'
-      - '*.report.png'
-      - '*.report.pdf'
+      - 'gc_plot/*gc_distribution.line.report.png'
+      - 'reads_quality_plot/*reads_quality.bar.report.png'
     pdf_files:
       - 'fastqc_general_stats.txt'
-      - 'gc_plot/*gc_distribution.line.png'
-      - 'reads_quality_plot/*reads_quality.bar.png'
-      - '*.report.png'
+      - 'gc_plot/*gc_distribution.line.report.png'
+      - 'reads_quality_plot/*reads_quality.bar.report.png'
   qc_report:
     ignore_files:
       - '.ignore'
