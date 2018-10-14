@@ -27,7 +27,10 @@ enrich_theme <- theme_bw() + theme(legend.key = element_blank(), axis.text.x = e
   legend.text = element_text(size = rel(0.8)))
 theme_set(enrich_theme)
 #-----function-------
-find_count <- function(count_data) {
+find_count <- function(count_data, filter_genes=NULL) {
+  if (! is.null(filter_genes)) {
+     count_data = count_data[count_data[, 1] %in% filter_genes, ]
+  }
   return(length(unique(count_data[, 1])))
 }
 
@@ -123,9 +126,9 @@ if (enrichment_type == "kegg") {
         sep = "/"), header = F)
     }
   }
-  up_data_term_count <- find_count(up_data_count_list)
-  down_data_term_count <- find_count(down_data_count_list)
-  all_data_term_count <- find_count(all_data_count_list)
+  up_data_term_count <- find_count(kegg_all_term_count, up_data_count_list$V1)
+  down_data_term_count <- find_count(kegg_all_term_count, down_data_count_list$V1)
+  all_data_term_count <- find_count(kegg_all_term_count, all_data_count_list$V1)
   kegg_up_data <- enrich_data(up_data, type = "kegg", label = "up", show_num = 15,
     max_name_length = 90, all_count = find_count(kegg_all_term_count), term_count = up_data_term_count)
   kegg_down_data <- enrich_data(down_data, type = "kegg", label = "down", show_num = 15,
@@ -148,7 +151,7 @@ if (enrichment_type == "kegg") {
     split = "_vs_"))[1], break_label2 = unlist(strsplit(first_level_split[1],
     split = "_vs_"))[2]), height = 9, width = dim(kegg_merge_data)[1]/4, type = "cairo-png")
 } else if (enrichment_type == "go") {
-  go_all_term_count <- read.delim(all_count_file, sep = ",")
+  go_all_term_count <- read.delim(all_count_file, sep = "\t")
   go_all_term_count <- go_all_term_count[go_all_term_count[, 2] != "", ]
   all_enrichment_files <- list.files(enrichment_tables_path)
   for (each_file in all_enrichment_files) {
@@ -186,9 +189,9 @@ if (enrichment_type == "kegg") {
     }
   }
 
-  up_data_term_count <- find_count(up_data_count_list)
-  down_data_term_count <- find_count(down_data_count_list)
-  all_data_term_count <- find_count(all_data_count_list)
+  up_data_term_count <- find_count(go_all_term_count, up_data_count_list$V1)
+  down_data_term_count <- find_count(go_all_term_count, down_data_count_list$V1)
+  all_data_term_count <- find_count(go_all_term_count, all_data_count_list$V1)
   go_up_data <- enrich_data(up_data, type = "go", label = "up", show_num = 15,
     max_name_length = 90, all_count = find_count(go_all_term_count), term_count = up_data_term_count)
   go_down_data <- enrich_data(down_data, type = "go", label = "down", show_num = 15,

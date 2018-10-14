@@ -2,15 +2,14 @@
 
 from __future__ import print_function
 import luigi
-import pandas as pd
 from luigi.util import requires, inherits
 import os
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import get_enrichment_data
 from rnaseq.modules.base_module import prepare, simple_task
 from rnaseq.modules.base_module import collection_task, cp_analysis_result
+from rnaseq.modules.base_module import simple_task_test
 import inspect
-import sys
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
@@ -82,48 +81,6 @@ class run_enrich_barplot(simple_task, Pubvar):
     go_dir = config.module_dir[MODULE]['go']
     kegg_dir = config.module_dir[MODULE]['kegg']
     diff_dir = config.module_dir['quant']['diff']
-
-    # TODO MERGE TWO enrich module
-    # def requires(self):
-    #     gene_files_df = pd.read_table(self.gene_files, header=None)
-    #     if len(gene_files_df.columns) == 1:
-    #         gene_files_df.columns = ['path']
-
-    #         def get_name(x):
-    #             return os.path.splitext(os.path.basename(x))[0]
-
-    #         gene_files_df.loc[:, 'name'] = map(get_name, gene_files_df.path)
-    #         gene_files_df.loc[:, 'dirname'] = gene_files_df.loc[:, 'name']
-    #     elif len(gene_files_df.columns) == 2:
-    #         gene_files_df.columns = ['name', 'path']
-    #         gene_files_df.loc[:, 'dirname'] = gene_files_df.loc[:, 'name']
-    #     elif len(gene_files_df.columns) == 3:
-    #         gene_files_df.columns = ['dirname', 'name', 'path']
-    #     else:
-    #         print("Wrong gene list file format!")
-    #         print("----------------------------")
-    #         print("1. Two column file: tab seperated, \
-    #               first column is gene list name,  \
-    #              second column is gene list path.")
-    #         print("2. Or one column file: gene list path \
-    #               (using gene list prefix as name)")
-    #         print("3. Three column file: tab seperated, \
-    #               first column is enrich dirname, \
-    #               second column is gene list name and \
-    #               third column is gene list path.")
-    #         print("----------------------------")
-    #         sys.exit(1)
-    #     return [(run_goseq(go=self.go, topgo=self.topgo,
-    #                        gene_length=self.gene_length, kegg=self.kegg,
-    #                        sp=self.sp, proj_dir=self.proj_dir,
-    #                        name=gene_files_df.name[each],
-    #                        genes=gene_files_df.path[each]),
-    #              run_kobas(go=self.go, topgo=self.topgo, kegg_bg=self.kegg_bg,
-    #                        gene_length=self.gene_length, kegg=self.kegg,
-    #                        sp=self.sp, proj_dir=self.proj_dir,
-    #                        name=gene_files_df.name[each],
-    #                        genes=gene_files_df.path[each])
-    #              ) for each in gene_files_df.index]
 
     def requires(self):
         diff_dir = os.path.join(

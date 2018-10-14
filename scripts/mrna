@@ -238,7 +238,7 @@ def cli(ctx, proj_dir, sample_inf, fq_dir, workers,
         star_index, go, gene_length, kegg_blast,
         kegg_abbr, kegg_background, gene_list_file,
         gene_anno):
-    ctx.obj['proj_dir'] = proj_dir
+    ctx.obj['proj_dir'] = os.path.abspath(proj_dir)
     ctx.obj['proj_name'] = proj_name
     ctx.obj['sample_inf'] = sample_inf
     ctx.obj['fq_dir'] = fq_dir
