@@ -1,7 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
 import pandas as pd
 from pandas import DataFrame, Series
 import numpy as np
-import click
 from rnaseq.utils import config
 from rnaseq.utils.util_functions import save_mkdir
 import os
@@ -9,11 +12,14 @@ import random
 import envoy
 import string
 import itertools
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
-GC_PLOT_R = os.path.join(script_dir, 'gc_plot_report.R')
-RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot_report.R')
+GC_PLOT_R = os.path.join(script_dir, 'gc_plot.R')
+RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot.R')
 GC_TEST_DATA = os.path.join(script_dir, 'test_data', 'unstrand.gc.txt')
 READS_QUAL_TEST_DATA = os.path.join(
     script_dir, 'test_data', 'reads_quality.txt')
@@ -91,36 +97,9 @@ def generate_fake_rq_file(outfile, offset=0.05):
     return example_df
 
 
-@click.command()
-@click.option(
-    '-p',
-    '--proj_dir',
-    help='project directory.',
-    type=click.Path(),
-    required=True
-)
-@click.option(
-    '-s',
-    '--sample_num',
-    help='sample number.',
-    type=click.INT,
-    required=True
-)
-@click.option(
-    '-d',
-    '--data_size',
-    help='data size.',
-    type=click.FLOAT,
-    default=10.0
-)
-@click.option(
-    '-a',
-    '--name_abbr',
-    help='sample name abbr.',
-    type=click.STRING,
-    default=''
-)
-def main(proj_dir, name_abbr, sample_num, data_size):
+def main(proj_dir, sample_num, data_size,
+         project_name='测试报告', project_id='测试报告',
+         company='onmath', name_abbr=''):
     # prepare working dir
     qc_main_dir = os.path.join(proj_dir,
                                config.module_dir[MODULE]['main'])
@@ -166,7 +145,7 @@ def main(proj_dir, name_abbr, sample_num, data_size):
         each=each
     )) for each in data_summary_df.sample_id]
     map(generate_fake_rq_file, rq_files)
-    envoy.run('Rscript {rq_r} {rq_dir}'.format(
+    envoy.run('Rscript {rq_r} --rq_dir {rq_dir}'.format(
         rq_r=RQ_PLOT_R, rq_dir=rq_dir
     ))
 
@@ -174,6 +153,11 @@ def main(proj_dir, name_abbr, sample_num, data_size):
     data_summary_df.columns = QC_DATA_OUT_HEADER
     data_summary_df.to_csv(qc_summary_file, sep='\t',
                            index=False, float_format='%.2f')
+
+    # generate report
+    r = envoy.run('qc_report -n {pn} -i {pi} -c {cp} {pd}'.format(
+        pn=project_name, pi=project_id,
+        cp=company, pd=qc_main_dir))
 
 
 if __name__ == '__main__':
