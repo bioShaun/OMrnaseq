@@ -1,0 +1,106 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import pandas as pd
+import sys
+import click
+import os
+reload(sys)
+from rnaseq.modules.fastqc import fake_project
+sys.setdefaultencoding('utf-8')
+
+
+NAME_MAP = {
+    u'天成新立': 'tally',
+    u'昂迈思': 'onmath',
+    u'天成未来': 'tcuni'
+}
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command('batch')
+@click.option(
+    '-p',
+    '--proj_dir',
+    help='project directory.',
+    type=click.Path(),
+    required=True
+)
+@click.option(
+    '-f',
+    '--report_inf',
+    type=click.Path(dir_okay=False, exists=True),
+    required=True
+)
+def batch_report(proj_dir, report_inf):
+    report_inf_df = pd.read_csv(report_inf, encoding='utf-8')
+    for each_idx in report_inf_df.index:
+        project_name, project_id, sample_num, data_size, company = report_inf_df.loc[
+            each_idx]
+        company = NAME_MAP.get(company, company)
+        each_proj_dir = os.path.join(proj_dir, project_id)
+        fake_project.main(proj_dir=each_proj_dir,
+                          sample_num=sample_num,
+                          data_size=data_size,
+                          project_name=project_name,
+                          project_id=project_id,
+                          company=company)
+
+
+@cli.command('single')
+@click.option(
+    '-p',
+    '--proj_dir',
+    help='project directory.',
+    type=click.Path(),
+    required=True)
+@click.option(
+    '-s',
+    '--sample_num',
+    help='sample number.',
+    type=click.INT,
+    required=True)
+@click.option(
+    '-d',
+    '--data_size',
+    help='data size.',
+    type=click.FLOAT,
+    default=10.0)
+@click.option(
+    '-a',
+    '--name_abbr',
+    help='sample name abbr.',
+    type=click.STRING,
+    default='')
+@click.option(
+    '-n',
+    '--project_name',
+    help='project name for the report.',
+    default='测试报告')
+@click.option(
+    '-i',
+    '--project_id',
+    help='project id for the report.',
+    default='测试报告')
+@click.option(
+    '-c',
+    '--company',
+    help='company name.',
+    default='onmath')
+def single_report(proj_dir, sample_num, data_size, name_abbr,
+                  project_name, project_id, company):
+    company = NAME_MAP.get(company, company)
+    fake_project.main(proj_dir=proj_dir,
+                      sample_num=sample_num,
+                      data_size=data_size,
+                      project_name=project_name,
+                      project_id=project_id,
+                      company=company)
+
+
+if __name__ == '__main__':
+    cli()
