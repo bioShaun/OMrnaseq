@@ -7,7 +7,6 @@ suppressMessages(library('dplyr'))
 
 p <- arg_parser('reads quality plot')
 p <- add_argument(p,'--rq_dir',help = 'reads quality directory.')
-p <- add_argument(p, '--sample_inf', help = 'sample info file.')
 argv <- parse_args(parser = p)
 
 file_path <- argv$rq_dir
