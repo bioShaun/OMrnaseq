@@ -16,6 +16,19 @@ NAME_MAP = {
     u'天成未来': 'tcuni'
 }
 
+SP_MAP = {
+    u'小麦': 'wheat'
+}
+
+
+def proj_type_from_id(proj_id):
+    if proj_id.startswith('TC-EX'):
+        return 'exome'
+    elif proj_id.startswith('TC-RNA'):
+        return 'rna'
+    else:
+        sys.exit('unkown project type [{}]'.format(proj_id))
+
 
 @click.group()
 def cli():
@@ -39,16 +52,21 @@ def cli():
 def batch_report(proj_dir, report_inf):
     report_inf_df = pd.read_csv(report_inf, encoding='utf-8')
     for each_idx in report_inf_df.index:
-        project_name, project_id, sample_num, data_size, company = report_inf_df.loc[
+        project_name, project_id, sample_num, data_size, company, species = report_inf_df.loc[
             each_idx]
         company = NAME_MAP.get(company, company)
+        species = SP_MAP.get(species, species)
         each_proj_dir = os.path.join(proj_dir, project_id)
-        fake_project.main(proj_dir=each_proj_dir,
-                          sample_num=sample_num,
-                          data_size=data_size,
-                          project_name=project_name,
-                          project_id=project_id,
-                          company=company)
+        project_type = proj_type_from_id(project_id)
+        fake_project.main(
+            proj_dir=each_proj_dir,
+            sample_num=sample_num,
+            data_size=data_size,
+            project_name=project_name,
+            project_id=project_id,
+            company=company,
+            species=species,
+            project_type=project_type)
 
 
 @cli.command('single')
@@ -91,15 +109,30 @@ def batch_report(proj_dir, report_inf):
     '--company',
     help='company name.',
     default='onmath')
-def single_report(proj_dir, sample_num, data_size, name_abbr,
-                  project_name, project_id, company):
+@click.option(
+    '-t',
+    '--project_type',
+    help='project type [rna, exome].',
+    default='rna')
+@click.option(
+    '-p',
+    '--species',
+    help='report species.',
+    default='wheat')
+def single_report(proj_dir, sample_num,
+                  data_size, name_abbr,
+                  project_name, project_id,
+                  company, project_type, species):
     company = NAME_MAP.get(company, company)
-    fake_project.main(proj_dir=proj_dir,
-                      sample_num=sample_num,
-                      data_size=data_size,
-                      project_name=project_name,
-                      project_id=project_id,
-                      company=company)
+    fake_project.main(
+        proj_dir=proj_dir,
+        sample_num=sample_num,
+        data_size=data_size,
+        project_name=project_name,
+        project_id=project_id,
+        company=company,
+        project_type=project_type,
+        species=species)
 
 
 if __name__ == '__main__':

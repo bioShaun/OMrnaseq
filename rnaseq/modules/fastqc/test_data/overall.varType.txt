@@ -1,0 +1,4 @@
+Type 	 overall 	 overall 
+DEL 	 77384 	 6.108475% 
+INS 	 70094 	 5.533023% 
+SNP 	 1119352 	 88.358501% 
