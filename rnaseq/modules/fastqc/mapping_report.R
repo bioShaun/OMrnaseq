@@ -2,28 +2,19 @@ suppressMessages(library(ggplot2))
 suppressMessages(library(reshape2))
 suppressMessages(library(scales))
 suppressMessages(library(argparser))
+suppressMessages(library(omplotr))
 options(stringsAsFactors = F)
-
-script_dir <- dirname(thisfile())
-lib_path = file.path(script_dir, '../../utils/RNAseq_plot_lib.R')
-source(lib_path)
-# source('C:\\work\\scripts\\atom\\R\\quantification\\quant_plot.R')
-#
-# setwd('C:\\work\\project\\mRNA\\2017\\OM-mRNA-20-Wheat-P20170502\\mapping')
 
 p <- arg_parser("star mapping stats plot")
 p <- add_argument(p, "--mapping_stats", help = "star mapping plot data")
-p <- add_argument(p, "--sample_inf", help = "group sample file")
 p <- add_argument(p, '--out_dir', help = 'output directory')
 argv <- parse_args(p)
 
 plot_data <- read.delim(argv$mapping_stats)
-sample_df <- read.delim(argv$sample_inf, header = F)
 plot_data$ummapped_reads = plot_data$total_reads - plot_data$unique_mapped_reads - plot_data$multiple_mapped_reads
 plot_data2 <- plot_data[, c(1,3:5)]
 melt_plot_data2 <- melt(plot_data2,id = c('Sample'))
 melt_plot_data2$variable <- factor(melt_plot_data2$variable, levels = c('ummapped_reads', 'multiple_mapped_reads', 'unique_mapped_reads'))
-melt_plot_data2$Sample <- factor(melt_plot_data2$Sample, levels = sample_df$V2)
 
 theme_set(theme_onmath() +
             theme(panel.grid.minor = element_blank(),

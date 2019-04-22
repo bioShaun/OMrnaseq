@@ -23,7 +23,8 @@ setup(
              'scripts/simple_qc',
              'scripts/_qc_wrapper',
              'scripts/get_fq_cfg',
-             'scripts/merge_files'],
+             'scripts/merge_files',
+             'scripts/fake_qc'],
     install_requires=[
         'luigi',
         'pyyaml',

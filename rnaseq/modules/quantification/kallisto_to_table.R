@@ -37,7 +37,7 @@ txi <- tximport(files, type = "kallisto", tx2gene = tx2gene)
 cts <- txi$counts
 y <- DGEList(cts)
 normfactors <- calcNormFactors(y)
-gene_tpm_matrix <- (txi$abundance)/(normfactors$samples$norm.factors)
+gene_tpm_matrix <- txi$abundance
 
 
 ## output quant table
