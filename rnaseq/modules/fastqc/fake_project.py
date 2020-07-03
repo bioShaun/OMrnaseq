@@ -2,26 +2,32 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import pandas as pd
-from pandas import DataFrame, Series
-import numpy as np
-from rnaseq.utils import config
-from rnaseq.utils.util_functions import save_mkdir
 import os
-import random
+import sys
+import glob
 import envoy
+import random
 import string
 import itertools
-import sys
+import numpy as np
+import pandas as pd
+from pandas import DataFrame, Series
+from rnaseq.utils import config
+from rnaseq.utils.util_functions import save_mkdir
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
+R_BIN="/workspace/public/software/R/R-3.4.3/executable/bin/"
 
 script_dir, script_name = os.path.split(os.path.abspath(__file__))
 GC_PLOT_R = os.path.join(script_dir, 'gc_plot.R')
 RQ_PLOT_R = os.path.join(script_dir, 'reads_quality_plot.R')
 MAPPING_PLOT_R = os.path.join(script_dir, 'mapping_report.R')
 SNP_PLOT_R = os.path.join(script_dir, 'snp_report.R')
+VIOLIN_PLOT_R = os.path.join(script_dir, 'expression_boxplot.R')
+PCA_PLOT_R = os.path.join(script_dir, 'PCA.R')
 GC_TEST_DATA = os.path.join(script_dir, 'test_data', 'unstrand.gc.txt')
 TEST_DATA_DIR = os.path.join(script_dir, 'test_data')
 READS_QUAL_TEST_DATA = os.path.join(
@@ -103,9 +109,11 @@ def generate_fake_rq_file(outfile, offset=0.05):
 
 
 def generate_fake_mapping_file(outdir, qc_df):
-    mapping_plot_file = os.path.join(outdir,
+    mapping_dir = os.path.join(outdir, 'mapping')
+    save_mkdir(mapping_dir)
+    mapping_plot_file = os.path.join(mapping_dir,
                                      'mapping_plot.txt')
-    mapping_table_file = os.path.join(outdir,
+    mapping_table_file = os.path.join(mapping_dir,
                                       'mapping_table.txt')
     sample_num = len(qc_df)
     mapping_plot_dict = dict()
@@ -126,9 +134,9 @@ def generate_fake_mapping_file(outdir, qc_df):
         columns=['Sample', 'total_reads',
                  'unique_mapped_reads',
                  'multiple_mapped_reads'])
-    mapping_plot_cmd = 'Rscript {map_r} --mapping_stats {map_f} --out_dir {map_d}'.format(
+    mapping_plot_cmd = '{R_BIN}/Rscript {map_r} --mapping_stats {map_f} --out_dir {map_d}'.format(
         map_r=MAPPING_PLOT_R, map_f=mapping_plot_file,
-        map_d=outdir
+        map_d=mapping_dir, R_BIN=R_BIN
     )
     envoy.run(mapping_plot_cmd)
     mapping_plot_df = mapping_plot_df.set_index('Sample')
@@ -142,6 +150,109 @@ def generate_fake_mapping_file(outdir, qc_df):
         columns=['unique_mapped_reads',
                  'multiple_mapped_reads',
                  'unmapped_reads'])
+
+
+def valid_go_dir(go_base):
+    go_dir = random.choice(os.listdir(go_base))
+    go_path = os.path.join(go_base, go_dir)
+    go_table = glob.glob('{}/*ALL.go.enrichment.txt'.format(go_path))
+    go_plot = glob.glob('{}/*go.enrichment.barplot.png'.format(go_path))
+    go_dag = glob.glob('{}/DAG/*ALL.*.GO.DAG.png'.format(go_path))
+    go_files = go_table + go_plot + go_dag
+    if len(go_files) != 5:
+        return valid_go_dir(go_base, go_dir_list)
+    else:
+        test_file = os.path.basename(go_table[0])
+        test_name = test_file.split('.ALL.go.enrichment.txt')[0]
+        return test_name
+
+
+def fake_quant(outdir, sample_num, qc_df):
+    quant_dir = os.path.join(outdir, 'quantification')
+    save_mkdir(quant_dir)
+    quant_file_dir = os.path.join(TEST_DATA_DIR, 'quant')
+    quant_file = os.path.join(quant_file_dir, 'test.tpm.txt')
+    quant_df = pd.read_csv(quant_file, sep='\t', index_col=0)
+    test_sample = random.sample(quant_df.columns, sample_num)
+    test_df = quant_df.loc[:, test_sample]
+    test_df.columns = qc_df.sample_id
+    test_file = os.path.join(quant_dir, 'exp.txt')
+    test_df.to_csv(test_file, sep='\t')
+    cmd_list = []
+    cmd_list.append(
+        '{R_BIN}/Rscript {violin_r} {exp_f} {od}'.format(
+            violin_r=VIOLIN_PLOT_R,
+            exp_f=test_file,
+            od=quant_dir,
+            R_BIN=R_BIN
+        )
+    )
+    cmd_list.append(
+        '{R_BIN}/Rscript {pca_r} {exp_f} {od}'.format(
+            pca_r=PCA_PLOT_R,
+            exp_f=test_file,
+            od=quant_dir,
+            R_BIN=R_BIN
+        )
+    )
+    vol_dir = os.path.join(quant_file_dir, 'volcano')
+    all_vol_plots = glob.glob('{}/*.png'.format(vol_dir))
+    vol_plot = random.choice(all_vol_plots)
+    cmd_list.append('cp {vol_p} {od}/volcano.png'.format(
+        vol_p=vol_plot,
+        od=quant_dir
+    ))
+    for cmd in cmd_list:
+        envoy.run(cmd)
+
+
+def fake_lnc(outdir):
+    lnc_dir = os.path.join(outdir, 'lncrna')
+    save_mkdir(lnc_dir)
+    lnc_file_dir = os.path.join(TEST_DATA_DIR, 'lnc')
+    cmd_list = []
+    cmd_list.append('cp {lnc_fd}/lncRNA_classify.png {lnc_fd}/feelnc.png {od}'.format(
+        lnc_fd=lnc_file_dir,
+        od=lnc_dir
+    ))
+    for cmd in cmd_list:
+        envoy.run(cmd)
+
+
+def fake_go_file(outdir):
+    enrich_dir = os.path.join(outdir, 'enrichment')
+    save_mkdir(enrich_dir)
+    go_file_dir = os.path.join(
+        TEST_DATA_DIR, 'go')
+    test_name = valid_go_dir(go_file_dir)
+    cmd_list = []
+    cmd_list.append(
+        'cp {go}/{name}/{name}.ALL.go.enrichment.txt {od}/go.table.txt'.format(
+            go=go_file_dir, name=test_name, od=enrich_dir
+        )
+    )
+    # cmd_list.append(
+    #     'cp {go}/{name}/{name}.go.enrichment.barplot.png {od}/go.barplot.png'.format(
+    #         go=go_file_dir, name=test_name, od=enrich_dir
+    #     )
+    # )
+    cmd_list.append(
+        'cp {go}/{name}/DAG/{name}.ALL.BP.GO.DAG.png {od}/BP.DAG.png'.format(
+            go=go_file_dir, name=test_name, od=enrich_dir
+        )
+    )
+    cmd_list.append(
+        'cp {go}/{name}/DAG/{name}.ALL.CC.GO.DAG.png {od}/CC.DAG.png'.format(
+            go=go_file_dir, name=test_name, od=enrich_dir
+        )
+    )
+    cmd_list.append(
+        'cp {go}/{name}/DAG/{name}.ALL.MF.GO.DAG.png {od}/MF.DAG.png'.format(
+            go=go_file_dir, name=test_name, od=enrich_dir
+        )
+    )
+    for cmd in cmd_list:
+        envoy.run(cmd)
 
 
 def generate_fake_snp_file(species, qc_df, outdir):
@@ -185,8 +296,8 @@ def generate_fake_snp_file(species, qc_df, outdir):
         snp_vartype_df.to_csv(outfile, sep='\t', index=False)
     var_stats = ['varType', 'varRegion', 'varEffects']
     [random_snp_stats(stats_i, snp_dir) for stats_i in var_stats]
-    plot_cmd = 'Rscript {snp_r} --snp_stats_dir {snp_d}'.format(
-        snp_r=SNP_PLOT_R, snp_d=snp_dir
+    plot_cmd = '{R_BIN}/Rscript {snp_r} --snp_stats_dir {snp_d}'.format(
+        snp_r=SNP_PLOT_R, snp_d=snp_dir, R_BIN=R_BIN
     )
     envoy.run(plot_cmd)
 
@@ -239,10 +350,16 @@ def main(proj_dir, sample_num, data_size,
     map(generate_fake_rq_file, rq_files)
 
     # generate mapping rate table
-    if project_type == 'exome':
+    if project_type in ['exome', 'reseq', 'rna', 'lnc']:
         generate_fake_mapping_file(qc_main_dir, data_summary_df)
         # generate snp data
-        generate_fake_snp_file(species, data_summary_df, qc_main_dir)
+        if project_type in ['exome', 'reseq', ]:
+            generate_fake_snp_file(species, data_summary_df, qc_main_dir)
+        elif project_type in ['rna', 'lnc']:
+            fake_go_file(qc_main_dir)
+            fake_quant(qc_main_dir, sample_num, data_summary_df)
+            if project_type == 'lnc':
+                fake_lnc(qc_main_dir)
 
     data_summary_df = data_summary_df.loc[:, QC_DATA_SUMMARY_HEADER]
     data_summary_df.columns = QC_DATA_OUT_HEADER
@@ -250,15 +367,15 @@ def main(proj_dir, sample_num, data_size,
                            index=False, float_format='%.2f')
 
     # generate plots & report
-    envoy.run('Rscript {gc_r} --gc_dir {gc_dir}'.format(
-        gc_r=GC_PLOT_R, gc_dir=gc_dir
+    envoy.run('{R_BIN}/Rscript {gc_r} --gc_dir {gc_dir}'.format(
+        gc_r=GC_PLOT_R, gc_dir=gc_dir, R_BIN=R_BIN
     ))
-    envoy.run('Rscript {rq_r} --rq_dir {rq_dir}'.format(
-        rq_r=RQ_PLOT_R, rq_dir=rq_dir
+    envoy.run('{R_BIN}/Rscript {rq_r} --rq_dir {rq_dir}'.format(
+        rq_r=RQ_PLOT_R, rq_dir=rq_dir, R_BIN=R_BIN
     ))
-    envoy.run('qc_report -n {pn} -i {pi} -c {cp} {pd}'.format(
+    envoy.run('qc_report -n {pn} -i {pi} -c {cp} -t {pt} {pd}'.format(
         pn=project_name, pi=project_id,
-        cp=company, pd=qc_main_dir))
+        cp=company, pd=qc_main_dir, pt=project_type))
 
 
 if __name__ == '__main__':

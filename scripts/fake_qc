@@ -17,15 +17,25 @@ NAME_MAP = {
 }
 
 SP_MAP = {
-    u'小麦': 'wheat'
+    u'小麦': 'wheat',
+    u'水稻': 'rice',
 }
 
 
-def proj_type_from_id(proj_id):
-    if proj_id.startswith('TC-EX'):
+def proj_type_from_id(proj_id, proj_name):
+    if 'EX' in proj_id:
         return 'exome'
-    elif proj_id.startswith('TC-RNA'):
-        return 'rna'
+    elif 'RNA' in proj_id:
+        if 'lncRNA' in proj_name:
+            return 'lnc'
+        else:
+            return 'rna'
+    elif 'DEN' in proj_id:
+        return 'denovo'
+    elif 'RE' in proj_id:
+        return 'reseq'
+    elif 'CHIP' in proj_id:
+        return 'chip'
     else:
         sys.exit('unkown project type [{}]'.format(proj_id))
 
@@ -52,12 +62,17 @@ def cli():
 def batch_report(proj_dir, report_inf):
     report_inf_df = pd.read_csv(report_inf, encoding='utf-8')
     for each_idx in report_inf_df.index:
-        project_name, project_id, sample_num, data_size, company, species = report_inf_df.loc[
+        if len(report_inf_df.loc[each_idx]) == 6:
+            project_name, project_id, sample_num, data_size, company, species = report_inf_df.loc[
             each_idx]
+            project_type = proj_type_from_id(project_id, project_name)
+        elif len(report_inf_df.loc[each_idx]) == 7:
+            project_name, project_id, sample_num, data_size, company, species, project_type = report_inf_df.loc[each_idx]
+        else:
+            sys.exit('Wrong column number')
         company = NAME_MAP.get(company, company)
         species = SP_MAP.get(species, species)
         each_proj_dir = os.path.join(proj_dir, project_id)
-        project_type = proj_type_from_id(project_id)
         fake_project.main(
             proj_dir=each_proj_dir,
             sample_num=sample_num,

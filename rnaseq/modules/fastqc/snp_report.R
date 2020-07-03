@@ -15,6 +15,35 @@ argv <- parse_args(p)
 
 # snp_stats_dir <- 'snp/'
 
+palette_colors <- function(pal_name, sample_num) {
+  col_pal_inf <- RColorBrewer::brewer.pal.info
+  if (! pal_name %in% rownames(col_pal_inf)) {
+    print('Palette for analysis:')
+    print(rownames(col_pal_inf))
+    stop('Wrong palette name!')
+  }
+  col_num <- col_pal_inf[pal_name, 'maxcolors']
+  if (sample_num <= col_num) {
+    return(RColorBrewer::brewer.pal(sample_num, pal_name))
+  } else {
+    return(colorRampPalette(RColorBrewer::brewer.pal(col_num, pal_name))(sample_num))
+  }
+}
+
+blank_theme <- function(base_size = 14) {
+  theme_minimal()+
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank(),
+    panel.grid=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title=element_text(size=rel(1),
+                            face="bold",
+                            colour = 'grey30')
+  )
+}
+
 
 snp_stats_dir <- argv$snp_stats_dir
 out_prefix <- file.path(snp_stats_dir, 'var_plot')

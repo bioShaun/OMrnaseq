@@ -1,0 +1,1 @@
+/workspace/project/om-mRNA-24-arabidopsis-pengmaoling-P20181113/raw_data/quantification/differential_analysis/pif4_x78_29_vs_pif4_x78_22/pif4_x78_29_vs_pif4_x78_22.edgeR.DE_results.txt
